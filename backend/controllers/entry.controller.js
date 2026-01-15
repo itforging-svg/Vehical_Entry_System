@@ -270,35 +270,42 @@ exports.softDelete = async (req, res) => {
 
 exports.findOne = async (req, res) => {
     try {
-        const idOrPass = req.params.id;
-        console.log("Backend findOne requested for:", idOrPass);
+        const identifier = req.params.id;
+        console.log(">>> FIND ONE INVOCATION <<<");
+        console.log("Request Identifier:", identifier);
 
         let query;
-        let values = [idOrPass];
+        let values = [identifier];
 
-        // If it looks like a gate pass number (starts with CSL-)
-        if (typeof idOrPass === 'string' && idOrPass.startsWith('CSL-')) {
+        // 1. Try to detect if it's a Gate Pass Number (CSL-...)
+        if (typeof identifier === 'string' && identifier.toUpperCase().startsWith('CSL-')) {
+            console.log("Detected format: Gate Pass No");
             query = `SELECT * FROM entry_logs WHERE gate_pass_no = $1 AND deleted_at IS NULL`;
-        } else {
-            // Try as ID (only if numeric)
-            if (!isNaN(idOrPass)) {
-                query = `SELECT * FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
-            } else {
-                return res.status(404).send({ message: "Invalid ID format: " + idOrPass });
-            }
+        }
+        // 2. Try to detect if it's a Numeric ID
+        else if (!isNaN(identifier) && !isNaN(parseFloat(identifier))) {
+            console.log("Detected format: Numeric ID");
+            query = `SELECT * FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
+        }
+        // 3. Fallback: Try both? No, let's just log and fail if neither
+        else {
+            console.log("Unknown format, failing fast.");
+            return res.status(404).send({ message: "Invalid identifier format" });
         }
 
         const result = await client.query(query, values);
+        console.log("DB Result Row Count:", result.rows.length);
+
         if (result.rows.length === 0) {
-            console.log("No log found for:", idOrPass);
-            return res.status(404).send({ message: "Gate pass not found in records for: " + idOrPass });
+            console.log("No record matches this identifier.");
+            return res.status(404).send({ message: `Record not found for identifier: ${identifier}` });
         }
 
-        console.log("Log found, sending data...");
+        console.log("Succesfully found record. Gate Pass No:", result.rows[0].gate_pass_no);
         res.status(200).send(result.rows[0]);
     } catch (err) {
-        console.error("Backend findOne ERROR:", err);
-        res.status(500).send({ message: err.message });
+        console.error("FATAL in findOne:", err);
+        res.status(500).send({ message: "Internal Server Error in findOne: " + err.message });
     }
 };
 
