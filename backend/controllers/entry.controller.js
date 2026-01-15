@@ -211,14 +211,28 @@ exports.reject = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const id = req.params.id;
-        const { driver_name, vehicle_reg, purpose, transporter } = req.body;
+        const {
+            driver_name, vehicle_reg, purpose, transporter, plant,
+            license_no, vehicle_type, puc_validity, insurance_validity,
+            chassis_last_5, engine_last_5, material_details
+        } = req.body;
+
         const query = `
             UPDATE entry_logs 
-            SET driver_name = $1, vehicle_reg = $2, purpose = $3, transporter = $4
-            WHERE id = $5 AND deleted_at IS NULL
+            SET 
+                driver_name = $1, vehicle_reg = $2, purpose = $3, transporter = $4,
+                plant = $5, license_no = $6, vehicle_type = $7, puc_validity = $8,
+                insurance_validity = $9, chassis_last_5 = $10, engine_last_5 = $11, 
+                material_details = $12
+            WHERE id = $13 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [driver_name, vehicle_reg, purpose, transporter, id]);
+        const values = [
+            driver_name, vehicle_reg, purpose, transporter, plant,
+            license_no, vehicle_type, puc_validity, insurance_validity,
+            chassis_last_5, engine_last_5, material_details, id
+        ];
+        const result = await client.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {

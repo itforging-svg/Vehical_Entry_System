@@ -39,7 +39,10 @@ const Dashboard = () => {
 
     const formatTime = (dateStr) => {
         if (!dateStr) return 'N/A';
-        return format(new Date(dateStr), 'HH:mm');
+        return new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit', minute: '2-digit', hour12: false,
+            timeZone: 'Asia/Kolkata'
+        }).format(new Date(dateStr));
     };
 
     const handleAction = async (id, action, additionalData = {}) => {
@@ -97,7 +100,7 @@ const Dashboard = () => {
     const stats = {
         today: logs.length,
         pending: logs.filter(l => l.approval_status === 'Pending').length,
-        inside: logs.filter(l => l.status === 'In').length
+        inside: logs.filter(l => l.status === 'In' && l.approval_status !== 'Rejected').length
     };
 
     const handleLogout = () => {
@@ -241,17 +244,30 @@ const Dashboard = () => {
                                         </td>
                                         <td className="p-4">
                                             {editMode === log.id ? (
-                                                <div className="flex flex-col gap-2 max-w-[200px]">
-                                                    <input
-                                                        className="px-2 py-1 text-xs border rounded outline-none focus:ring-1 focus:ring-amber-500"
-                                                        value={editData.vehicle_reg}
-                                                        onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })}
-                                                    />
-                                                    <input
-                                                        className="px-2 py-1 text-xs border rounded outline-none focus:ring-1 focus:ring-amber-500"
-                                                        value={editData.driver_name}
-                                                        onChange={e => setEditData({ ...editData, driver_name: e.target.value })}
-                                                    />
+                                                <div className="flex flex-col gap-2 min-w-[300px] p-2 bg-white rounded shadow-xl border border-slate-200 z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                                                    <h3 className="text-sm font-bold text-slate-800 mb-2 border-b pb-1">Edit Entry</h3>
+                                                    <div className="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto p-1">
+                                                        <input className="input-xs" placeholder="Driver Name" value={editData.driver_name} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Vehicle Reg" value={editData.vehicle_reg} onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Transporter" value={editData.transporter || ''} onChange={e => setEditData({ ...editData, transporter: e.target.value })} />
+                                                        <input className="input-xs" placeholder="License No" value={editData.license_no || ''} onChange={e => setEditData({ ...editData, license_no: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Vehicle Type" value={editData.vehicle_type || ''} onChange={e => setEditData({ ...editData, vehicle_type: e.target.value })} />
+                                                        <input className="input-xs" placeholder="PUC Validity" type="date" value={editData.puc_validity ? editData.puc_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, puc_validity: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Ins. Validity" type="date" value={editData.insurance_validity ? editData.insurance_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, insurance_validity: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Chassis Last 5" value={editData.chassis_last_5 || ''} onChange={e => setEditData({ ...editData, chassis_last_5: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Engine Last 5" value={editData.engine_last_5 || ''} onChange={e => setEditData({ ...editData, engine_last_5: e.target.value })} />
+                                                        <input className="input-xs" placeholder="Material" value={editData.material_details || ''} onChange={e => setEditData({ ...editData, material_details: e.target.value })} />
+                                                        <input className="input-xs col-span-2" placeholder="Purpose" value={editData.purpose} onChange={e => setEditData({ ...editData, purpose: e.target.value })} />
+                                                        <select className="input-xs col-span-2" value={editData.plant || ''} onChange={e => setEditData({ ...editData, plant: e.target.value })}>
+                                                            {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
+                                                                <option key={p} value={p}>{p}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex justify-end gap-2 mt-2 pt-2 border-t">
+                                                        <button onClick={() => setEditMode(null)} className="px-3 py-1 bg-slate-100 rounded text-xs">Cancel</button>
+                                                        <button onClick={() => handleUpdate(log.id)} className="px-3 py-1 bg-amber-500 text-white rounded text-xs">Save</button>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col">
@@ -342,80 +358,86 @@ const Dashboard = () => {
                                                                 >
                                                                     <CheckCircle size={16} />
                                                                 </button>
-                                                                <button
-                                                                    className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
-                                                                    onClick={() => {
-                                                                        const reason = window.prompt("Rejection reason:");
-                                                                        if (reason) handleAction(log.id, 'reject', { reason });
-                                                                    }}
-                                                                    title="Reject Entrance"
-                                                                >
-                                                                    <XCircle size={16} />
-                                                                </button>
-                                                                <button
-                                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
-                                                                    onClick={() => {
-                                                                        setEditMode(log.id);
-                                                                        setEditData({ vehicle_reg: log.vehicle_reg, driver_name: log.driver_name, purpose: log.purpose });
-                                                                    }}
-                                                                    title="Edit Log"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {isSuperAdmin && (
-                                                            <button
-                                                                className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
-                                                                onClick={() => handleAction(log.id, 'delete')}
-                                                                title="Soft Delete (Super Admin Only)"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        )}
-                                                        {log.status === 'In' && log.approval_status === 'Approved' && (
-                                                            <button
-                                                                className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
-                                                                onClick={() => handleExit(log.id)}
-                                                                title="Register Exit"
-                                                            >
-                                                                <DoorOpen size={16} />
-                                                            </button>
+                                                            )}
+                                                                {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
+                                                                    <button
+                                                                        className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                                                                        onClick={() => {
+                                                                            const reason = window.prompt("Rejection reason:");
+                                                                            if (reason) handleAction(log.id, 'reject', { reason });
+                                                                        }}
+                                                                        title="Reject Entrance"
+                                                                    >
+                                                                        <XCircle size={16} />
+                                                                    </button>
+                                                                </>
                                                         )}
                                                         <button
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
-                                                            title="Print Voucher"
-                                                            onClick={() => window.open(`/print/${log.id}`, '_blank')}
+                                                            className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                                            onClick={() => {
+                                                                setEditMode(log.id);
+                                                                setEditData({ ...log });
+                                                            }}
+                                                            title="Edit Log"
                                                         >
-                                                            <Printer size={16} />
+                                                            <Edit2 size={16} />
                                                         </button>
                                                     </>
                                                 )}
-                                            </div>
-                                        </td>
+                                                {isSuperAdmin && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
+                                                        onClick={() => handleAction(log.id, 'delete')}
+                                                        title="Soft Delete (Super Admin Only)"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                                {log.status === 'In' && log.approval_status === 'Approved' && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
+                                                        onClick={() => handleExit(log.id)}
+                                                        title="Register Exit"
+                                                    >
+                                                        <DoorOpen size={16} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
+                                                    title="Print Voucher"
+                                                    onClick={() => window.open(`/print/${log.id}`, '_blank')}
+                                                >
+                                                    <Printer size={16} />
+                                                </button>
+                                            </>
+                                                )}
+                                        </div>
+                                    </td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
-
-                {/* Photo Modal */}
-                {showPhoto && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
-                        <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-                            <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
-                            <button
-                                className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
-                                onClick={() => setShowPhoto(null)}
-                            >
-                                <XCircle size={20} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </main>
         </div>
+
+                {/* Photo Modal */ }
+    {
+        showPhoto && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
+                <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                    <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
+                    <button
+                        className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
+                        onClick={() => setShowPhoto(null)}
+                    >
+                        <XCircle size={20} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
+            </main >
+        </div >
     );
 };
 

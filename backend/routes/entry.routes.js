@@ -13,7 +13,7 @@ router.put('/:id/exit', [authJwt], entry.updateExit);
 router.put('/:id/approve', [authJwt], entry.approve);
 router.put('/:id/reject', [authJwt], entry.reject);
 router.put('/:id', [authJwt], entry.update);
-router.get('/:id', [authJwt], entry.findOne);
+router.get('/:id', entry.findOne);
 router.delete('/:id', [authJwt], entry.softDelete);
 
 module.exports = router;
