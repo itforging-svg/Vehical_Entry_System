@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Webcam from 'react-webcam';
 import Header from '../components/Header';
 import './VehicleEntry.css';
@@ -65,7 +65,7 @@ const VehicleEntry = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('/api/entry', {
+            const res = await api.post('/entry', {
                 ...formData,
                 photos: photos
             });
@@ -81,7 +81,14 @@ const VehicleEntry = () => {
 
     return (
         <div className="vehicle-entry-standalone">
-            <Header title="Vehicle Entry System" />
+            <Header
+                title="Vehicle Entry System"
+                rightContent={
+                    <button className="header-login-btn" onClick={() => window.location.href = '/login'}>
+                        Login
+                    </button>
+                }
+            />
 
             <main className="entry-main">
                 <div className="entry-layout">

@@ -11,7 +11,17 @@ const client = new Client({
     port: 5432,
 });
 
-client.connect();
+client.on('error', err => {
+    console.error('Unexpected error on idle client', err);
+    process.exit(-1);
+});
+
+client.connect()
+    .then(() => console.log('Connected to PostgreSQL Database'))
+    .catch(err => {
+        console.error('Database Connection Error:', err.message);
+        console.error('Check if PostgreSQL is running and credentials in .env are correct.');
+    });
 
 // Register Entry
 exports.create = async (req, res) => {
@@ -103,18 +113,82 @@ exports.updateExit = async (req, res) => {
     }
 };
 
-// Get Today's Logs
+// Get Today's Logs with filtering
 exports.findToday = async (req, res) => {
     try {
-        const query = `
-            SELECT e.*, v.registration_number 
+        let query = `
+            SELECT e.* 
             FROM entry_logs e
-            LEFT JOIN vehicles v ON e.vehicle_id = v.id
             WHERE e.created_at::date = CURRENT_DATE AND e.deleted_at IS NULL
-            ORDER BY e.created_at DESC
         `;
-        const result = await client.query(query);
+        let values = [];
+
+        // If not superadmin, filter by plant
+        if (req.userRole && req.userRole !== 'superadmin' && req.userPlant) {
+            query += ` AND e.plant = $1`;
+            values.push(req.userPlant);
+        }
+
+        query += ` ORDER BY e.created_at DESC`;
+
+        const result = await client.query(query, values);
         res.status(200).send(result.rows);
+    } catch (err) {
+        console.error("Error in entry.findToday:", err);
+        res.status(500).send({ message: err.message });
+    }
+};
+// Approve Entry
+exports.approve = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const query = `
+            UPDATE entry_logs 
+            SET approval_status = 'Approved', approved_by = $1
+            WHERE id = $2 AND deleted_at IS NULL
+            RETURNING *
+        `;
+        const result = await client.query(query, [req.username || req.userId, id]);
+        if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
+        res.status(200).send(result.rows[0]);
+    } catch (err) {
+        res.status(500).send({ message: err.message });
+    }
+};
+
+// Reject Entry
+exports.reject = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { reason } = req.body;
+        const query = `
+            UPDATE entry_logs 
+            SET approval_status = 'Rejected', approved_by = $1, rejection_reason = $2
+            WHERE id = $3 AND deleted_at IS NULL
+            RETURNING *
+        `;
+        const result = await client.query(query, [req.username || req.userId, reason, id]);
+        if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
+        res.status(200).send(result.rows[0]);
+    } catch (err) {
+        res.status(500).send({ message: err.message });
+    }
+};
+
+// Update Entry (Minimal)
+exports.update = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { driver_name, vehicle_reg, purpose } = req.body;
+        const query = `
+            UPDATE entry_logs 
+            SET driver_name = $1, vehicle_reg = $2, purpose = $3
+            WHERE id = $4 AND deleted_at IS NULL
+            RETURNING *
+        `;
+        const result = await client.query(query, [driver_name, vehicle_reg, purpose, id]);
+        if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
+        res.status(200).send(result.rows[0]);
     } catch (err) {
         res.status(500).send({ message: err.message });
     }

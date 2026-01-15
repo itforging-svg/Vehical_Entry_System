@@ -1,0 +1,265 @@
+.dashboard-container {
+    background-color: #f0f2f5;
+    min-height: 100vh;
+}
+
+.dashboard-main {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0d1117;
+    margin: 0.5rem 0 0 0;
+}
+
+.table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.table-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+}
+
+.refresh-btn {
+    background: #f39c12;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logs-table th {
+    background: #f8fafc;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.logs-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.status-pill.in {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-pill.out {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Approval Pills */
+.approval-pill {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.approval-pill.pending {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.approval-pill.approved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.approval-pill.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Action Buttons */
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actions-cell {
+    min-width: 200px;
+}
+
+.approve-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.reject-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.edit-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.save-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.cancel-btn {
+    background: #64748b;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.exit-btn {
+    background: #0d1117;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+/* Formatting */
+.reg-no {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.driver-name {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.reason-text {
+    font-size: 0.7rem;
+    color: #ef4444;
+    margin-top: 2px;
+}
+
+.edit-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.edit-fields input {
+    padding: 4px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

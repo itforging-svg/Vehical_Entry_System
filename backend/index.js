@@ -19,7 +19,9 @@ app.get('/', (req, res) => {
 
 // Import Routes
 const entryRoutes = require('./routes/entry.routes');
+const authRoutes = require('./routes/auth.routes');
 app.use('/api/entry', entryRoutes);
+app.use('/api/auth', authRoutes);
 
 // Database environment validation
 if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_PASSWORD) {
@@ -28,6 +30,21 @@ if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !pro
 }
 
 app.listen(PORT, '0.0.0.0', () => {
+    const os = require('os');
+    const networkInterfaces = os.networkInterfaces();
+    let networkIP = 'localhost';
+
+    // Find the first non-internal IPv4 address
+    for (const interfaceName in networkInterfaces) {
+        for (const iface of networkInterfaces[interfaceName]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                networkIP = iface.address;
+                break;
+            }
+        }
+        if (networkIP !== 'localhost') break;
+    }
+
     console.log(`Vehicle Entry Backend Server: http://localhost:${PORT}`);
-    console.log(`Network Access: http://192.168.0.132:${PORT}`);
+    console.log(`Network Access: http://${networkIP}:${PORT}`);
 });

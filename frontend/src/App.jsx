@@ -1,6 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
 import VehicleEntry from './pages/VehicleEntry';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 import './index.css';
 
 function App() {
@@ -8,7 +11,12 @@ function App() {
         <Router>
             <div className="App">
                 <Routes>
-                    <Route path="/" element={<VehicleEntry />} />
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/entry" element={<VehicleEntry />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/admin/dashboard" element={<Dashboard />} />
+                    <Route path="/entry/dashboard" element={<Dashboard />} />
+                    <Route path="/pool/dashboard" element={<Dashboard />} />
                 </Routes>
             </div>
         </Router>

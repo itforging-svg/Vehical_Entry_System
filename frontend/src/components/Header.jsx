@@ -2,7 +2,7 @@ import React from 'react';
 import logo from '../assets/logo.png';
 import './Header.css';
 
-const Header = ({ title = "Vehicle Entry System" }) => {
+const Header = ({ title = "Vehicle Entry System", showBadge = true, rightContent = null }) => {
     return (
         <header className="main-header">
             <div className="header-left">
@@ -13,7 +13,9 @@ const Header = ({ title = "Vehicle Entry System" }) => {
                 </div>
             </div>
             <div className="header-right">
-                <span className="system-badge">STANDALONE ENTRY PORTAL</span>
+                {rightContent ? rightContent : (
+                    showBadge && <span className="system-badge">STANDALONE ENTRY PORTAL</span>
+                )}
             </div>
         </header>
     );

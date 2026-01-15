@@ -47,3 +47,21 @@
     letter-spacing: 1px;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
+
+.header-login-btn {
+    background: var(--accent-orange);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.header-login-btn:hover {
+    background: #f39c12;
+}
