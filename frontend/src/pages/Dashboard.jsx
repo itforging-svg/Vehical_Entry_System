@@ -411,42 +411,39 @@ const Dashboard = () => {
                                                         </button>
                                                     </>
                                                 ) : (
-                                                    <>
+                                                    <div className="flex justify-center gap-2">
                                                         {(isSuperAdmin || log.approval_status === 'Pending') && (
-                                                            <>
-                                                                <button
-                                                                    className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
-                                                                    onClick={() => handleAction(log.id, 'approve')}
-                                                                    title="Approve Entrance"
-                                                                >
-                                                                    <CheckCircle size={16} />
-                                                                </button>
-                                                                {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
-                                                                    <button
-                                                                        className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
-                                                                        onClick={() => {
-                                                                            const reason = window.prompt("Rejection reason:");
-                                                                            if (reason) handleAction(log.id, 'reject', { reason });
-                                                                        }}
-                                                                        title="Reject Entrance"
-                                                                    >
-                                                                        <XCircle size={16} />
-                                                                    </button>
-                                                                )}
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
+                                                                onClick={() => handleAction(log.id, 'approve')}
+                                                                title="Approve Entrance"
+                                                            >
+                                                                <CheckCircle size={16} />
                                                             </button>
-                                                                )}
-                                                    </>
-                                                )}
-                                                <button
-                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
-                                                    onClick={() => {
-                                                        setEditMode(log.id);
-                                                        setEditData({ ...log });
-                                                    }}
-                                                    title="Edit Log"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
+                                                        )}
+                                                        {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                                                                onClick={() => {
+                                                                    const reason = window.prompt("Rejection reason:");
+                                                                    if (reason) handleAction(log.id, 'reject', { reason });
+                                                                }}
+                                                                title="Reject Entrance"
+                                                            >
+                                                                <XCircle size={16} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                                            onClick={() => {
+                                                                setEditMode(log.id);
+                                                                setEditData({ ...log });
+                                                            }}
+                                                            title="Edit Log"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                                 {isSuperAdmin && (
                                                     <button
