@@ -5,7 +5,7 @@ import logo from '../assets/logo.png';
 import {
     Printer, ArrowLeft, ShieldCheck,
     Calendar, Clock, User, Car,
-    MapPin, AlertOctagon, CheckCircle2
+    MapPin, AlertOctagon, CheckCircle2, Camera
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -13,6 +13,7 @@ const PrintSlip = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [log, setLog] = useState(null);
+    const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -23,6 +24,19 @@ const PrintSlip = () => {
                 setError(null);
                 const res = await api.get(`/entry/${id}`);
                 setLog(res.data);
+
+                // Parse Photos logic
+                if (res.data.photo_url) {
+                    try {
+                        // Check if it's already an array or needs parsing
+                        const rawPhotos = res.data.photo_url;
+                        const parsedPhotos = typeof rawPhotos === 'string' ? JSON.parse(rawPhotos) : rawPhotos;
+                        setPhotos(Array.isArray(parsedPhotos) ? parsedPhotos : []);
+                    } catch (e) {
+                        console.error("Failed to parse photos:", e);
+                        setPhotos([]);
+                    }
+                }
             } catch (err) {
                 console.error("Error loading gate pass:", err);
                 const msg = err.response?.data?.message || err.message;
@@ -76,7 +90,7 @@ const PrintSlip = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] print:bg-white p-4 md:p-12 flex flex-col items-center">
+        <div className="min-h-screen bg-[#f8fafc] print:bg-white p-4 md:p-8 flex flex-col items-center">
             {/* Action Bar (Hidden in Print) */}
             <div className="w-full max-w-[210mm] flex justify-between items-center mb-8 print:hidden animate-fade-in">
                 <button
@@ -94,19 +108,19 @@ const PrintSlip = () => {
                 </button>
             </div>
 
-            {/* Main Voucher Container */}
-            <div className="w-full max-w-[210mm] bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[48px] overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none print:m-0 print:w-full animate-slide-up">
+            {/* Main Voucher Container - ENFORCED A4 DIMENSIONS */}
+            <div className="w-[210mm] min-h-[297mm] bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-none md:rounded-[48px] overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none print:m-0 print:w-full flex flex-col relative box-border">
 
                 {/* Brand Header Section */}
-                <div className="bg-[#0e2a63] p-12 flex justify-between items-center relative overflow-hidden border-b-8 border-amber-500">
+                <div className="bg-[#0e2a63] p-8 flex justify-between items-center relative overflow-hidden border-b-8 border-amber-500 print:p-6 !print:bg-[#0e2a63] !print:text-white">
                     {/* Decorative Background Element */}
                     <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
                         <ShieldCheck size={280} className="text-white" />
                     </div>
 
-                    <div className="flex items-center gap-8 relative z-10 font-sans">
-                        <div className="bg-white p-4 rounded-3xl shadow-xl flex items-center justify-center">
-                            <img src={logo} alt="CSL Logo" className="h-20 w-auto" />
+                    <div className="flex items-center gap-6 relative z-10 font-sans">
+                        <div className="bg-white p-3 rounded-2xl shadow-xl flex items-center justify-center">
+                            <img src={logo} alt="CSL Logo" className="h-16 w-auto" />
                         </div>
                         <div className="space-y-1">
                             <h1 className="text-3xl font-black text-white tracking-tighter uppercase leading-none italic">
@@ -117,149 +131,165 @@ const PrintSlip = () => {
                     </div>
 
                     <div className="text-right relative z-10 leading-none">
-                        <p className="text-[10px] font-black text-amber-500/80 uppercase tracking-[0.3em] mb-3">Voucher Serial No.</p>
-                        <p className="text-4xl font-black text-white font-mono tracking-tighter underline decoration-amber-500 underline-offset-8">
+                        <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-[0.3em] mb-2">Voucher Serial No.</p>
+                        <p className="text-3xl font-black text-white font-mono tracking-tighter underline decoration-amber-500 underline-offset-8">
                             {log.gate_pass_no}
                         </p>
                     </div>
                 </div>
 
                 {/* Main Content Body */}
-                <div className="p-12 space-y-12">
+                <div className="p-8 print:p-6 space-y-8 flex-grow">
 
                     {/* Identification Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                                 <User size={12} className="text-amber-500" /> Authorized Carrier
                             </label>
-                            <p className="text-xl font-black text-slate-800 tracking-tight capitalize">{log.driver_name}</p>
+                            <p className="text-lg font-black text-slate-800 tracking-tight capitalize">{log.driver_name}</p>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                                 <Car size={13} className="text-amber-500" /> Vehicle Plate
                             </label>
-                            <div className="inline-block bg-slate-900 px-4 py-1 rounded-xl">
-                                <p className="text-xl font-black text-white font-mono tracking-widest uppercase">{log.vehicle_reg}</p>
+                            <div className="inline-block bg-slate-900 px-3 py-1 rounded-lg print:border print:border-slate-900 print:bg-transparent">
+                                <p className="text-lg font-black text-white print:text-slate-900 font-mono tracking-widest uppercase">{log.vehicle_reg}</p>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                                 <MapPin size={12} className="text-amber-500" /> Destination Unit
                             </label>
-                            <p className="text-xl font-black text-amber-600 tracking-tight underline decoration-amber-500/20 underline-offset-4">{log.plant}</p>
+                            <p className="text-lg font-black text-amber-600 tracking-tight underline decoration-amber-500/20 underline-offset-4">{log.plant}</p>
                         </div>
                     </div>
 
                     {/* Technical & Compliance Details */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 border-y border-slate-100">
+                    <div className="grid grid-cols-4 gap-4 py-6 border-y border-slate-100">
                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">License/ID</label>
-                            <p className="text-sm font-bold text-slate-700">{log.license_no || "N/A"}</p>
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">License/ID</label>
+                            <p className="text-xs font-bold text-slate-700">{log.license_no || "N/A"}</p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Classification</label>
-                            <p className="text-sm font-bold text-slate-700">{log.vehicle_type || "Commercial"}</p>
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Classification</label>
+                            <p className="text-xs font-bold text-slate-700">{log.vehicle_type || "Commercial"}</p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Validated On</label>
-                            <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <Calendar size={14} className="text-slate-300" />
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Validated On</label>
+                            <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                                <Calendar size={12} className="text-slate-300" />
                                 {format(new Date(log.entry_time), 'dd MMM yyyy')}
                             </p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Arrival Mark</label>
-                            <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <Clock size={14} className="text-slate-300" />
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Arrival Mark</label>
+                            <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                                <Clock size={12} className="text-slate-300" />
                                 {format(new Date(log.entry_time), 'HH:mm:ss')}
                             </p>
                         </div>
                     </div>
 
-                    {/* Operational Details (Highlight Card) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 flex flex-col justify-center">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Official Purpose</label>
-                            <div className="flex gap-4">
-                                <div className="mt-1"><ShieldCheck size={24} className="text-amber-500 opacity-50" /></div>
-                                <p className="text-lg font-black text-slate-800 leading-tight italic">"{log.purpose}"</p>
+                    {/* Operational Details */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-center print:bg-white print:border-slate-200">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Official Purpose</label>
+                            <div className="flex gap-3">
+                                <div className="mt-1"><ShieldCheck size={20} className="text-amber-500 opacity-50" /></div>
+                                <p className="text-base font-black text-slate-800 leading-tight italic">"{log.purpose}"</p>
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 flex flex-col justify-center">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Material Declaration</label>
-                            <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider">
+                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-center print:bg-white print:border-slate-200">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Material Declaration</label>
+                            <p className="text-xs font-bold text-slate-600 leading-relaxed uppercase tracking-wider">
                                 {log.material_details || "No significant payload declared during entry."}
                             </p>
                         </div>
                     </div>
 
-                    {/* Security Compliance Section */}
-                    <div className="bg-[#111827] rounded-[40px] p-10 text-white relative overflow-hidden">
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="p-3 bg-amber-500 rounded-2xl text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                                    <ShieldCheck size={24} />
-                                </div>
-                                <h3 className="text-xl font-black uppercase tracking-[0.1em]">EHS Mandatory Guidelines</h3>
+                    {/* CAPTURED VISUALS SECTION */}
+                    {photos.length > 0 && (
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                                <Camera size={16} className="text-amber-500" />
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Digital Surveillance Capture</h3>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4">
-                                {[
-                                    "PPE (Helmet, Shoes, Goggles) is mandatory at all times.",
-                                    "Adhere strictly to yellow-marked floor walkways.",
-                                    "Mobile phone cameras are prohibited in production units.",
-                                    "Do not approach suspended loads or overhead crane zones.",
-                                    "Strictly No Tobacco / No Smoking policy inside premises.",
-                                    "Report any unsafe conditions to the CSL Safety Officer.",
-                                    "Voucher must be validated & submitted upon exit.",
-                                    "Securely park in designated zones only."
-                                ].map((item, idx) => (
-                                    <div key={idx} className="flex gap-4 items-start group">
-                                        <div className="w-5 h-5 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center mt-0.5 group-hover:bg-amber-500 transition-colors">
-                                            <p className="text-[8px] font-black text-white">{idx + 1}</p>
-                                        </div>
-                                        <p className="text-[11px] font-bold text-slate-400 leading-relaxed group-hover:text-slate-200 transition-colors italic">{item}</p>
+                            <div className="grid grid-cols-4 gap-3">
+                                {photos.map((photo, idx) => (
+                                    <div key={idx} className="aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm print:border-slate-300">
+                                        <img src={photo} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
 
-                            <div className="mt-12 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-end gap-8">
-                                <div className="max-w-xs">
-                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <AlertOctagon size={14} /> Emergency Protocol
-                                    </p>
-                                    <p className="text-[9px] text-slate-500 leading-relaxed uppercase tracking-widest font-bold">
-                                        Follow the continuous siren. Exit via designated Fire Exit routes and proceed to Assembly Point Alpha immediately.
-                                    </p>
+                    {/* Security Compliance Section */}
+                    {/* Conditionally hide if we are tight on space, but try to keep it */}
+                    <div className="bg-[#111827] rounded-[32px] p-6 text-white relative overflow-hidden print:bg-white print:text-black print:border-2 print:border-black mt-auto">
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="p-2 bg-amber-500 rounded-xl text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.3)] print:bg-black print:text-white print:shadow-none">
+                                    <ShieldCheck size={16} />
                                 </div>
-                                <div className="text-center group">
-                                    <div className="w-48 h-[1px] bg-slate-700 mb-3 group-hover:bg-amber-500 transition-all"></div>
-                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] group-hover:text-slate-300 transition-all">Authorized Gate Control</p>
-                                </div>
+                                <h3 className="text-sm font-black uppercase tracking-[0.1em]">EHS Mandatory Guidelines</h3>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {[
+                                    "PPE (Helmet, Shoes) is mandatory.",
+                                    "Walk only on yellow paths.",
+                                    "No cameras in production.",
+                                    "Stay clear of cranes/loads.",
+                                    "No Smoking on premises.",
+                                    "Report unsafe acts immediately.",
+                                    "Validate voucher on exit.",
+                                    "Park in designated zones."
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex gap-2 items-start group">
+                                        <div className="w-3 h-3 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center mt-0.5 group-hover:bg-amber-500 transition-colors print:bg-black print:text-white">
+                                            <p className="text-[6px] font-black text-white">{idx + 1}</p>
+                                        </div>
+                                        <p className="text-[9px] font-bold text-slate-400 leading-tight group-hover:text-slate-200 transition-colors italic print:text-black">{item}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Integration Footer */}
-                <div className="bg-slate-50 py-6 text-center border-t border-slate-100">
-                    <div className="flex items-center justify-center gap-3">
-                        <CheckCircle2 size={12} className="text-emerald-500" />
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">
-                            System Verified Document • Integrated Security Framework v2.0
-                        </p>
+                        {/* Compact Footer in Compliance Box */}
+                        <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center print:border-black/20">
+                            <div className="flex items-center gap-2">
+                                <AlertOctagon size={10} className="text-amber-500 print:text-black" />
+                                <span className="text-[7px] text-slate-400 uppercase tracking-widest print:text-black">Emergency? Proceed to Assembly Point Alpha</span>
+                            </div>
+                            <p className="text-[7px] text-slate-500 uppercase tracking-[0.2em] print:text-black">Authorized Gate Control</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* System Tag (Hidden in Print) */}
-            <p className="mt-12 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] print:hidden">
+            <p className="mt-8 text-[9px] font-black text-slate-300 uppercase tracking-[0.4em] print:hidden">
                 Generated via CSL-VMS Automated Intelligence Terminal &copy; {new Date().getFullYear()}
             </p>
+
+            <style type="text/css" media="print">
+                {`
+                    @page {
+                        size: A4;
+                        margin: 0;
+                    }
+                    body {
+                        background-color: white;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                `}
+            </style>
         </div>
     );
 };
