@@ -249,3 +249,17 @@ exports.softDelete = async (req, res) => {
         res.status(500).send({ message: err.message });
     }
 };
+
+// Find One Entry
+exports.findOne = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const query = `SELECT * FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
+        const result = await client.query(query, [id]);
+        if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
+        res.status(200).send(result.rows[0]);
+    } catch (err) {
+        res.status(500).send({ message: err.message });
+    }
+};
+

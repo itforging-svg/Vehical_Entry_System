@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import {
+    LogOut, CheckCircle, XCircle, Printer, DoorOpen,
+    Users, Clock, Search, Edit2, Trash2,
+    Calendar, Car, User, FileText, Info
+} from 'lucide-react';
+import { format } from 'date-fns';
 import api from '../api';
-import Header from '../components/Header';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -18,6 +23,7 @@ const Dashboard = () => {
 
     const fetchLogs = async (date = selectedDate) => {
         try {
+            setLoading(true);
             const res = await api.get(`/entry/bydate?date=${date}`);
             setLogs(res.data);
         } catch (err) {
@@ -31,33 +37,15 @@ const Dashboard = () => {
         fetchLogs(selectedDate);
     }, [selectedDate]);
 
-    // Simplified time formatting - browser automatically handles local timezone (IST)
-    const formatTimeIST = (dateStr) => {
+    const formatTime = (dateStr) => {
         if (!dateStr) return 'N/A';
-        const date = new Date(dateStr);
-        return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-    };
-
-    const formatDateIST = (dateStr) => {
-        if (!dateStr) return 'N/A';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-GB').replace(/\//g, '-');
-    };
-
-    const getPhotoThumbnail = (photoJson) => {
-        try {
-            if (!photoJson) return null;
-            const photos = JSON.parse(photoJson);
-            return Array.isArray(photos) && photos.length > 0 ? photos[0] : null;
-        } catch (e) {
-            return null;
-        }
+        return format(new Date(dateStr), 'HH:mm');
     };
 
     const handleAction = async (id, action, additionalData = {}) => {
         try {
             if (action === 'delete') {
-                if (!window.confirm("Are you sure you want to delete this record? It will be moved to history/soft-deleted.")) return;
+                if (!window.confirm("Are you sure you want to delete this record? it will be moved to history.")) return;
                 await api.delete(`/entry/${id}`);
             } else {
                 await api.put(`/entry/${id}/${action}`, additionalData);
@@ -88,6 +76,16 @@ const Dashboard = () => {
         }
     };
 
+    const getPhotoThumbnail = (photoJson) => {
+        try {
+            if (!photoJson) return null;
+            const photos = JSON.parse(photoJson);
+            return Array.isArray(photos) && photos.length > 0 ? photos[0] : null;
+        } catch (e) {
+            return null;
+        }
+    };
+
     const filteredLogs = logs.filter(log => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
@@ -96,161 +94,304 @@ const Dashboard = () => {
             log.gate_pass_no?.toLowerCase().includes(query);
     });
 
-    const todayCount = logs.length;
-    const pendingCount = logs.filter(l => l.approval_status === 'Pending').length;
-    const insideCount = logs.filter(l => l.status === 'In').length;
+    const stats = {
+        today: logs.length,
+        pending: logs.filter(l => l.approval_status === 'Pending').length,
+        inside: logs.filter(l => l.status === 'In').length
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = '/';
+    };
 
     return (
-        <div className="dashboard-container">
-            <Header title="Admin Dashboard" rightContent={
-                <div className="user-info">
-                    <span className="date-display">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
-                    <span className="username-display">👤 {username}</span>
-                    <button className="logout-btn btn-primary" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button>
-                </div>
-            } />
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Header */}
+            <header className="bg-[#0e2a63] text-white p-4 sticky top-0 z-50 shadow-xl border-b border-white/10">
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/10 p-2 rounded-lg">
+                            <Car className="text-amber-500" size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold tracking-wide">CHANDAN STEEL LTD</h1>
+                            <div className="text-xs text-slate-400 uppercase tracking-widest">
+                                {isSuperAdmin ? 'Super Admin Dashboard' : 'Plant Admin Portal'}
+                            </div>
+                        </div>
+                    </div>
 
-            <main className="dashboard-main">
-                <div className="stats-strip">
-                    <div className="stat-card blue-card glass">
-                        <h3>TODAY'S COUNT</h3>
-                        <p className="stat-value">{todayCount}</p>
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:block text-right">
+                            <div className="text-sm font-semibold">{format(new Date(), 'EEEE, d MMM')}</div>
+                            <div className="text-xs text-slate-400 flex items-center justify-end gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                System Active
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 pl-6 border-l border-white/10">
+                            <span className="text-sm font-medium text-slate-300">👤 {username}</span>
+                            <button onClick={handleLogout} className="bg-white/10 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2 uppercase tracking-wide">
+                                <LogOut size={14} /> Logout
+                            </button>
+                        </div>
                     </div>
-                    <div className="stat-card orange-card glass">
-                        <h3>PENDING APPROVAL</h3>
-                        <p className="stat-value">{pendingCount}</p>
-                        <span className="stat-label">Action Required</span>
+                </div>
+            </header>
+
+            <main className="max-w-7xl mx-auto p-6 md:p-8 animate-fade-in">
+                {/* Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Users size={64} /></div>
+                        <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Today's Total</div>
+                        <div className="text-4xl font-black">{stats.today}</div>
+                        <div className="text-[10px] text-blue-100 mt-2 bg-white/20 inline-block px-2 py-0.5 rounded uppercase font-bold">Entries Found</div>
                     </div>
-                    <div className="stat-card green-card glass">
-                        <h3>INSIDE PREMISE</h3>
-                        <p className="stat-value">{insideCount}</p>
-                        <span className="stat-label">Checked In</span>
+
+                    <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-amber-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Clock size={64} /></div>
+                        <div className="text-amber-100 text-xs font-bold uppercase tracking-wider mb-1">Pending Approval</div>
+                        <div className="text-4xl font-black">{stats.pending}</div>
+                        <div className="text-[10px] text-amber-100 mt-2 bg-white/20 inline-block px-2 py-0.5 rounded uppercase font-bold">Action Required</div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white shadow-lg shadow-green-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><DoorOpen size={64} /></div>
+                        <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-1">Inside Premise</div>
+                        <div className="text-4xl font-black">{stats.inside}</div>
+                        <div className="text-[10px] text-green-100 mt-2 bg-white/20 inline-block px-2 py-0.5 rounded uppercase font-bold">Currently In</div>
                     </div>
                 </div>
 
-                <div className="table-card glass">
-                    <div className="table-controls">
-                        <div className="left-controls">
-                            <h2 className="table-title">Vehicle Logs</h2>
+                {/* Main Table Section */}
+                <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden glass">
+                    <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            <h2 className="text-xl font-bold text-slate-800 tracking-tight">Vehicle Logs</h2>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                                />
+                            </div>
+                        </div>
+                        <div className="relative w-full md:w-80">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input
-                                type="date"
-                                className="date-picker"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
+                                type="text"
+                                placeholder="Search by vehicle, driver or pass ID..."
+                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="🔍 Search by name, vehicle, pass no..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
                     </div>
 
-                    <div className="table-responsive">
-                        <table className="logs-table">
-                            <thead>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50/50 text-slate-500 uppercase text-[10px] font-black tracking-widest border-b border-slate-100">
                                 <tr>
-                                    <th>BATCH / PHOTO</th>
-                                    <th>VEHICLE DETAILS</th>
-                                    <th>CONTEXT</th>
-                                    <th>TIMING</th>
-                                    <th>STATUS</th>
-                                    <th>CONTROLS</th>
+                                    <th className="p-4 pl-8">Batch / Photo</th>
+                                    <th className="p-4">Vehicle Details</th>
+                                    <th className="p-4">Context</th>
+                                    <th className="p-4">Timing</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4 text-center pr-8">Controls</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-slate-50">
                                 {loading ? (
-                                    <tr><td colSpan="6" className="text-center">Loading logs...</td></tr>
+                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 bg-white">
+                                        <div className="flex flex-col items-center gap-2 animate-pulse">
+                                            <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"></div>
+                                            <span className="text-xs font-bold uppercase tracking-widest">Loading Logs...</span>
+                                        </div>
+                                    </td></tr>
                                 ) : filteredLogs.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center">No logs found</td></tr>
+                                    <tr><td colSpan="6" className="p-20 text-center text-slate-300 bg-white">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <FileText size={48} className="opacity-10" />
+                                            <span className="text-sm font-medium">No records found for this date.</span>
+                                        </div>
+                                    </td></tr>
                                 ) : filteredLogs.map(log => (
-                                    <tr key={log.id}>
-                                        <td>
-                                            <div className="batch-info">
-                                                <div className="photo-thumbnail" onClick={() => setShowPhoto(getPhotoThumbnail(log.photo_url))}>
+                                    <tr key={log.id} className="hover:bg-slate-50/80 transition-all group">
+                                        <td className="p-4 pl-8">
+                                            <div className="flex items-center gap-4">
+                                                <div
+                                                    className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden cursor-zoom-in group-hover:border-amber-200 transition-all shadow-sm"
+                                                    onClick={() => setShowPhoto(getPhotoThumbnail(log.photo_url))}
+                                                >
                                                     {getPhotoThumbnail(log.photo_url) ? (
-                                                        <img src={getPhotoThumbnail(log.photo_url)} alt="Vehicle" />
+                                                        <img src={getPhotoThumbnail(log.photo_url)} alt="Vehicle" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="photo-placeholder">🚗</div>
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300 text-xl font-bold">🚗</div>
                                                     )}
                                                 </div>
-                                                <span className="batch-no">{log.gate_pass_no}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-mono text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Gate Pass</span>
+                                                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{log.gate_pass_no}</span>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td className="p-4">
                                             {editMode === log.id ? (
-                                                <div className="edit-fields">
-                                                    <input value={editData.vehicle_reg} onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })} />
-                                                    <input value={editData.driver_name} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} />
+                                                <div className="flex flex-col gap-2 max-w-[200px]">
+                                                    <input
+                                                        className="px-2 py-1 text-xs border rounded outline-none focus:ring-1 focus:ring-amber-500"
+                                                        value={editData.vehicle_reg}
+                                                        onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })}
+                                                    />
+                                                    <input
+                                                        className="px-2 py-1 text-xs border rounded outline-none focus:ring-1 focus:ring-amber-500"
+                                                        value={editData.driver_name}
+                                                        onChange={e => setEditData({ ...editData, driver_name: e.target.value })}
+                                                    />
                                                 </div>
                                             ) : (
-                                                <div className="vehicle-details">
-                                                    <div className="vehicle-name">{log.driver_name}</div>
-                                                    <div className="vehicle-reg">{log.vehicle_reg}</div>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <User size={12} className="text-slate-400" />
+                                                        <div className="font-bold text-slate-900 text-sm">{log.driver_name}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Car size={12} className="text-slate-400" />
+                                                        <div className="font-mono text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded uppercase">{log.vehicle_reg}</div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </td>
-                                        <td>
-                                            <div className="context-info">
-                                                <div className="purpose-text">{log.purpose || 'Na'}</div>
-                                                <div className="plant-name">Plant: {log.plant}</div>
-                                                {log.material_details && <div className="material-badge">{log.material_details}</div>}
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="text-xs font-medium text-slate-700 flex items-center gap-1">
+                                                    <Info size={12} className="text-blue-400" />
+                                                    {log.purpose}
+                                                </div>
+                                                <div className="text-[10px] font-black text-amber-600 uppercase flex items-center gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-amber-500"></div>
+                                                    Plant: {log.plant}
+                                                </div>
+                                                {log.material_details && (
+                                                    <div className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-bold inline-block w-fit">
+                                                        MAT: {log.material_details}
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
-                                        <td>
-                                            <div className="timing-info">
-                                                <div className="time-row">
-                                                    <span className="time-label">IN</span>
-                                                    <span className="time-value">{formatTimeIST(log.entry_time)}</span>
+                                        <td className="p-4">
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-[9px] font-black text-slate-400 w-5">IN</div>
+                                                    <div className="font-mono text-xs font-bold text-slate-800 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{formatTime(log.entry_time)}</div>
                                                 </div>
-                                                <div className="time-row">
-                                                    <span className="time-label">OUT</span>
-                                                    <span className="time-value">{log.exit_time ? formatTimeIST(log.exit_time) : '-'}</span>
-                                                </div>
+                                                {log.exit_time && (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="text-[9px] font-black text-slate-300 w-5">OUT</div>
+                                                        <div className="font-mono text-xs font-medium text-slate-400">{formatTime(log.exit_time)}</div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
-                                        <td>
-                                            <div className="status-group">
-                                                <span className={`status-badge ${log.status.toLowerCase()}`}>
-                                                    ● {log.status === 'In' ? 'INSIDE' : 'EXITED'}
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-2">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border
+                                                    ${log.status === 'In' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                                                    <span className={`w-1 h-1 rounded-full ${log.status === 'In' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                                                    {log.status === 'In' ? 'INSIDE' : 'EXITED'}
                                                 </span>
-                                                <span className={`approval-badge ${log.approval_status.toLowerCase()}`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide border w-fit
+                                                    ${log.approval_status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                                        log.approval_status === 'Approved' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                            'bg-red-50 text-red-700 border-red-100'}`}>
                                                     {log.approval_status}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="controls-cell">
-                                            {editMode === log.id ? (
-                                                <div className="btn-group">
-                                                    <button className="icon-btn save" onClick={() => handleUpdate(log.id)} title="Save">💾</button>
-                                                    <button className="icon-btn cancel" onClick={() => setEditMode(null)} title="Cancel">✖</button>
-                                                </div>
-                                            ) : (
-                                                <div className="btn-group">
-                                                    {(isSuperAdmin || log.approval_status === 'Pending') && (
-                                                        <>
-                                                            <button className="icon-btn approve" onClick={() => handleAction(log.id, 'approve')} title="Approve">✓</button>
-                                                            <button className="icon-btn reject" onClick={() => {
-                                                                const reason = window.prompt("Rejection reason:");
-                                                                if (reason) handleAction(log.id, 'reject', { reason });
-                                                            }} title="Reject">✖</button>
-                                                            <button className="icon-btn edit" onClick={() => {
-                                                                setEditMode(log.id);
-                                                                setEditData({ vehicle_reg: log.vehicle_reg, driver_name: log.driver_name, purpose: log.purpose });
-                                                            }} title="Edit">✎</button>
-                                                        </>
-                                                    )}
-                                                    {isSuperAdmin && (
-                                                        <button className="icon-btn delete" onClick={() => handleAction(log.id, 'delete')} title="Delete (Soft)">🗑</button>
-                                                    )}
-                                                    {log.status === 'In' && log.approval_status === 'Approved' && (
-                                                        <button className="icon-btn exit" onClick={() => handleExit(log.id)} title="Register Exit">⏏</button>
-                                                    )}
-                                                    <button className="icon-btn print" title="Print">🖨</button>
-                                                </div>
-                                            )}
+                                        <td className="p-4 pr-8">
+                                            <div className="flex justify-center gap-2">
+                                                {editMode === log.id ? (
+                                                    <>
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
+                                                            onClick={() => handleUpdate(log.id)}
+                                                            title="Save Change"
+                                                        >
+                                                            <CheckCircle size={16} />
+                                                        </button>
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                                                            onClick={() => setEditMode(null)}
+                                                            title="Cancel"
+                                                        >
+                                                            <XCircle size={16} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {(isSuperAdmin || log.approval_status === 'Pending') && (
+                                                            <>
+                                                                <button
+                                                                    className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
+                                                                    onClick={() => handleAction(log.id, 'approve')}
+                                                                    title="Approve Entrance"
+                                                                >
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                                <button
+                                                                    className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                                                                    onClick={() => {
+                                                                        const reason = window.prompt("Rejection reason:");
+                                                                        if (reason) handleAction(log.id, 'reject', { reason });
+                                                                    }}
+                                                                    title="Reject Entrance"
+                                                                >
+                                                                    <XCircle size={16} />
+                                                                </button>
+                                                                <button
+                                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                                                    onClick={() => {
+                                                                        setEditMode(log.id);
+                                                                        setEditData({ vehicle_reg: log.vehicle_reg, driver_name: log.driver_name, purpose: log.purpose });
+                                                                    }}
+                                                                    title="Edit Log"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {isSuperAdmin && (
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
+                                                                onClick={() => handleAction(log.id, 'delete')}
+                                                                title="Soft Delete (Super Admin Only)"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                        {log.status === 'In' && log.approval_status === 'Approved' && (
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
+                                                                onClick={() => handleExit(log.id)}
+                                                                title="Register Exit"
+                                                            >
+                                                                <DoorOpen size={16} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
+                                                            title="Print Voucher"
+                                                            onClick={() => window.open(`/print/${log.id}`, '_blank')}
+                                                        >
+                                                            <Printer size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -259,11 +400,17 @@ const Dashboard = () => {
                     </div>
                 </div>
 
+                {/* Photo Modal */}
                 {showPhoto && (
-                    <div className="photo-modal" onClick={() => setShowPhoto(null)}>
-                        <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
-                            <img src={showPhoto} alt="Full vehicle" />
-                            <button className="close-modal" onClick={() => setShowPhoto(null)}>✖</button>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
+                        <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                            <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
+                            <button
+                                className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
+                                onClick={() => setShowPhoto(null)}
+                            >
+                                <XCircle size={20} />
+                            </button>
                         </div>
                     </div>
                 )}

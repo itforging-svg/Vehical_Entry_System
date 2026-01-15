@@ -4,6 +4,7 @@ import Landing from './pages/Landing';
 import VehicleEntry from './pages/VehicleEntry';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import PrintSlip from './pages/PrintSlip';
 import './index.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
                     <Route path="/admin/dashboard" element={<Dashboard />} />
                     <Route path="/entry/dashboard" element={<Dashboard />} />
                     <Route path="/pool/dashboard" element={<Dashboard />} />
+                    <Route path="/print/:id" element={<PrintSlip />} />
                 </Routes>
             </div>
         </Router>
