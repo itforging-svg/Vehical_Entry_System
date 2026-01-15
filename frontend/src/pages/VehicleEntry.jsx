@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 import Webcam from 'react-webcam';
 import Header from '../components/Header';
-import { Camera, CameraOff, Save, X, Trash2, Zap, Monitor, ClipboardList, Info, LogIn } from 'lucide-react';
+import { Camera, CameraOff, Save, X, Trash2, Zap, Monitor, ClipboardList, Info, LogIn, ChevronDown } from 'lucide-react';
 
 const VehicleEntry = () => {
     const [entryTime, setEntryTime] = useState('');
@@ -22,18 +22,33 @@ const VehicleEntry = () => {
         insurance_validity: '',
         purpose: '',
         material_details: '',
-        entry_time: ''
+        entry_time: '',
+        transporter: ''
     });
 
     useEffect(() => {
-        const now = new Date();
-        const date = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-        const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-        setEntryTime(`${date} ${time}`);
-        setFormData(prev => ({
-            ...prev,
-            entry_time: now.toISOString()
-        }));
+        const updateTime = () => {
+            const now = new Date();
+            const istDateStr = new Intl.DateTimeFormat('en-GB', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                timeZone: 'Asia/Kolkata'
+            }).format(now).replace(/\//g, '-');
+
+            const istTimeStr = new Intl.DateTimeFormat('en-GB', {
+                hour: '2-digit', minute: '2-digit', hour12: false,
+                timeZone: 'Asia/Kolkata'
+            }).format(now);
+
+            setEntryTime(`${istDateStr} ${istTimeStr}`);
+            setFormData(prev => ({
+                ...prev,
+                entry_time: now.toISOString()
+            }));
+        };
+
+        updateTime();
+        const interval = setInterval(updateTime, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleChange = (e) => {
@@ -316,18 +331,33 @@ const VehicleEntry = () => {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Plant / Division</label>
-                                        <select
-                                            name="plant"
-                                            value={formData.plant}
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Transporter / Party Name</label>
+                                        <input
+                                            type="text"
+                                            name="transporter"
+                                            value={formData.transporter}
                                             onChange={handleChange}
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all appearance-none cursor-pointer"
-                                            required
-                                        >
-                                            {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
-                                                <option key={p} value={p}>{p}</option>
-                                            ))}
-                                        </select>
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            placeholder="Enter Transporter Name"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Plant / Division</label>
+                                        <div className="relative">
+                                            <select
+                                                name="plant"
+                                                value={formData.plant}
+                                                onChange={handleChange}
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all appearance-none cursor-pointer pr-10"
+                                                required
+                                            >
+                                                {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
+                                                    <option key={p} value={p}>{p}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2 md:col-span-2">

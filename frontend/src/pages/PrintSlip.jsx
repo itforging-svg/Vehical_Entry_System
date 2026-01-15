@@ -102,6 +102,14 @@ const PrintSlip = () => {
                                 {log.plant}
                             </div>
                         </div>
+
+                        {/* Transporter Detail */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block">Transporter / Party Name</label>
+                            <div className="text-lg font-black text-slate-700">
+                                {log.transporter || "---"}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="md:col-span-12 h-px bg-slate-100"></div>

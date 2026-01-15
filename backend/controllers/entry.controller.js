@@ -39,6 +39,7 @@ exports.create = async (req, res) => {
             purpose,
             material_details,
             entry_time,
+            transporter,
             photos // Array of dataURLs
         } = req.body;
 
@@ -48,7 +49,10 @@ exports.create = async (req, res) => {
 
         // Generate Code: CSL-[LV/HV]-[DDMMYYYY]-[SEQ]
         const now = new Date();
-        const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, ''); // DDMMYYYY
+        // IST Offset is +5:30
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istDate = new Date(now.getTime() + istOffset);
+        const dateStr = istDate.toISOString().slice(0, 10).split('-').reverse().join(''); // DDMMYYYY
 
         // Find next sequence for today
         const countQuery = `
@@ -73,16 +77,16 @@ exports.create = async (req, res) => {
                 plant, vehicle_reg, driver_name, license_no, vehicle_type, 
                 puc_validity, insurance_validity, chassis_last_5, 
                 engine_last_5, purpose, material_details, gate_pass_no, 
-                entry_time, photo_url, status
+                entry_time, photo_url, status, transporter
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In')
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In', $15)
             RETURNING *
         `;
         const values = [
             plant, vehicle_reg, driver_name, license_no, vehicle_type,
             puc_validity, insurance_validity, chassis_last_5,
             engine_last_5, purpose, material_details, gate_pass_no,
-            entry_time, JSON.stringify(photos || [])
+            entry_time, JSON.stringify(photos || []), transporter
         ];
         const result = await client.query(query, values);
         res.status(201).send(result.rows[0]);
@@ -207,14 +211,14 @@ exports.reject = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const id = req.params.id;
-        const { driver_name, vehicle_reg, purpose } = req.body;
+        const { driver_name, vehicle_reg, purpose, transporter } = req.body;
         const query = `
             UPDATE entry_logs 
-            SET driver_name = $1, vehicle_reg = $2, purpose = $3
-            WHERE id = $4 AND deleted_at IS NULL
+            SET driver_name = $1, vehicle_reg = $2, purpose = $3, transporter = $4
+            WHERE id = $5 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [driver_name, vehicle_reg, purpose, id]);
+        const result = await client.query(query, [driver_name, vehicle_reg, purpose, transporter, id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
