@@ -1,0 +1,49 @@
+.main-header {
+    background-color: var(--primary-blue);
+    color: #fff;
+    padding: 0.8rem 2rem;
+    height: 85px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo-img {
+    height: 60px;
+    background: white;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.header-text h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.header-text p {
+    font-size: 0.8rem;
+    color: #fff;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.system-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
