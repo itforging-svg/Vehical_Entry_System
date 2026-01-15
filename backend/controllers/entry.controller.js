@@ -221,3 +221,31 @@ exports.update = async (req, res) => {
         res.status(500).send({ message: err.message });
     }
 };
+
+// Soft Delete Entry
+exports.softDelete = async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Verify only superadmin can delete
+        if (req.userRole !== 'superadmin') {
+            return res.status(403).send({ message: "Only superadmin can perform this action" });
+        }
+
+        const query = `
+            UPDATE entry_logs 
+            SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND deleted_at IS NULL
+            RETURNING *
+        `;
+        const result = await client.query(query, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send({ message: "Entry not found or already deleted" });
+        }
+
+        res.status(200).send({ message: "Entry successfully deleted", entry: result.rows[0] });
+    } catch (err) {
+        console.error("Error in entry.softDelete:", err);
+        res.status(500).send({ message: err.message });
+    }
+};

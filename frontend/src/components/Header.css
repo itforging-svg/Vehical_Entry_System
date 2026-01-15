@@ -1,67 +1,62 @@
 .main-header {
-    background-color: var(--primary-blue);
-    color: #fff;
-    padding: 0.8rem 2rem;
-    height: 85px;
+    background-color: #1e293b;
+    /* Slate-800 */
+    padding: 1.25rem 2.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
-    width: 100%;
+    border-bottom: 3px solid #f59e0b;
+    /* Gold border */
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 1.5rem;
 }
 
 .header-logo-img {
-    height: 60px;
-    background: white;
-    padding: 5px;
-    border-radius: 4px;
+    height: 48px;
+    width: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .header-text h1 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #fff;
     margin: 0;
+    font-size: 1.25rem;
+    color: #f59e0b;
+    /* Gold title */
+    font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .header-text p {
-    font-size: 0.8rem;
-    color: #fff;
     margin: 0;
-    opacity: 0.8;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    /* Muted text */
+    font-weight: 600;
+    letter-spacing: 0.2em;
 }
 
 .system-badge {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 6px 15px;
-    border-radius: 20px;
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 1px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.05em;
 }
 
-.header-login-btn {
-    background: var(--accent-orange);
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.3s;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.header-login-btn:hover {
-    background: #f39c12;
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
 }

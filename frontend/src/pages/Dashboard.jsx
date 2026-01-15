@@ -10,6 +10,7 @@ const Dashboard = () => {
     const [editData, setEditData] = useState({});
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPhoto, setShowPhoto] = useState(null);
 
     const username = localStorage.getItem('username');
     const roles = JSON.parse(localStorage.getItem('roles') || '[]');
@@ -30,26 +31,37 @@ const Dashboard = () => {
         fetchLogs(selectedDate);
     }, [selectedDate]);
 
-    // Convert UTC to IST (UTC +5:30)
+    // Simplified time formatting - browser automatically handles local timezone (IST)
     const formatTimeIST = (dateStr) => {
         if (!dateStr) return 'N/A';
-        const utcDate = new Date(dateStr);
-        // Add 5 hours 30 minutes for IST
-        const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
-        const time = istDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-        return time;
+        const date = new Date(dateStr);
+        return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
     const formatDateIST = (dateStr) => {
         if (!dateStr) return 'N/A';
-        const utcDate = new Date(dateStr);
-        const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
-        return istDate.toLocaleDateString('en-GB').replace(/\//g, '-');
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-GB').replace(/\//g, '-');
+    };
+
+    const getPhotoThumbnail = (photoJson) => {
+        try {
+            if (!photoJson) return null;
+            const photos = JSON.parse(photoJson);
+            return Array.isArray(photos) && photos.length > 0 ? photos[0] : null;
+        } catch (e) {
+            return null;
+        }
     };
 
     const handleAction = async (id, action, additionalData = {}) => {
         try {
-            await api.put(`/entry/${id}/${action}`, additionalData);
+            if (action === 'delete') {
+                if (!window.confirm("Are you sure you want to delete this record? It will be moved to history/soft-deleted.")) return;
+                await api.delete(`/entry/${id}`);
+            } else {
+                await api.put(`/entry/${id}/${action}`, additionalData);
+            }
             fetchLogs(selectedDate);
         } catch (err) {
             alert(`Failed to ${action} entry`);
@@ -94,29 +106,29 @@ const Dashboard = () => {
                 <div className="user-info">
                     <span className="date-display">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
                     <span className="username-display">👤 {username}</span>
-                    <button className="logout-btn" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button>
+                    <button className="logout-btn btn-primary" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button>
                 </div>
             } />
 
             <main className="dashboard-main">
                 <div className="stats-strip">
-                    <div className="stat-card blue-card">
+                    <div className="stat-card blue-card glass">
                         <h3>TODAY'S COUNT</h3>
                         <p className="stat-value">{todayCount}</p>
                     </div>
-                    <div className="stat-card orange-card">
+                    <div className="stat-card orange-card glass">
                         <h3>PENDING APPROVAL</h3>
                         <p className="stat-value">{pendingCount}</p>
                         <span className="stat-label">Action Required</span>
                     </div>
-                    <div className="stat-card green-card">
+                    <div className="stat-card green-card glass">
                         <h3>INSIDE PREMISE</h3>
                         <p className="stat-value">{insideCount}</p>
                         <span className="stat-label">Checked In</span>
                     </div>
                 </div>
 
-                <div className="table-card">
+                <div className="table-card glass">
                     <div className="table-controls">
                         <div className="left-controls">
                             <h2 className="table-title">Vehicle Logs</h2>
@@ -157,7 +169,13 @@ const Dashboard = () => {
                                     <tr key={log.id}>
                                         <td>
                                             <div className="batch-info">
-                                                <div className="photo-placeholder">🚗</div>
+                                                <div className="photo-thumbnail" onClick={() => setShowPhoto(getPhotoThumbnail(log.photo_url))}>
+                                                    {getPhotoThumbnail(log.photo_url) ? (
+                                                        <img src={getPhotoThumbnail(log.photo_url)} alt="Vehicle" />
+                                                    ) : (
+                                                        <div className="photo-placeholder">🚗</div>
+                                                    )}
+                                                </div>
                                                 <span className="batch-no">{log.gate_pass_no}</span>
                                             </div>
                                         </td>
@@ -211,7 +229,7 @@ const Dashboard = () => {
                                                 </div>
                                             ) : (
                                                 <div className="btn-group">
-                                                    {log.approval_status === 'Pending' && !isSuperAdmin && (
+                                                    {(isSuperAdmin || log.approval_status === 'Pending') && (
                                                         <>
                                                             <button className="icon-btn approve" onClick={() => handleAction(log.id, 'approve')} title="Approve">✓</button>
                                                             <button className="icon-btn reject" onClick={() => {
@@ -223,6 +241,9 @@ const Dashboard = () => {
                                                                 setEditData({ vehicle_reg: log.vehicle_reg, driver_name: log.driver_name, purpose: log.purpose });
                                                             }} title="Edit">✎</button>
                                                         </>
+                                                    )}
+                                                    {isSuperAdmin && (
+                                                        <button className="icon-btn delete" onClick={() => handleAction(log.id, 'delete')} title="Delete (Soft)">🗑</button>
                                                     )}
                                                     {log.status === 'In' && log.approval_status === 'Approved' && (
                                                         <button className="icon-btn exit" onClick={() => handleExit(log.id)} title="Register Exit">⏏</button>
@@ -237,6 +258,15 @@ const Dashboard = () => {
                         </table>
                     </div>
                 </div>
+
+                {showPhoto && (
+                    <div className="photo-modal" onClick={() => setShowPhoto(null)}>
+                        <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
+                            <img src={showPhoto} alt="Full vehicle" />
+                            <button className="close-modal" onClick={() => setShowPhoto(null)}>✖</button>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
