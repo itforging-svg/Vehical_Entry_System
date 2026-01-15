@@ -138,6 +138,34 @@ exports.findToday = async (req, res) => {
         res.status(500).send({ message: err.message });
     }
 };
+
+// Get Logs by Date
+exports.findByDate = async (req, res) => {
+    try {
+        const { date } = req.query; // Format: YYYY-MM-DD
+        let query = `
+            SELECT e.* 
+            FROM entry_logs e
+            WHERE e.created_at::date = $1 AND e.deleted_at IS NULL
+        `;
+        let values = [date || new Date().toISOString().split('T')[0]];
+
+        // If not superadmin, filter by plant
+        if (req.userRole && req.userRole !== 'superadmin' && req.userPlant) {
+            query += ` AND e.plant = $2`;
+            values.push(req.userPlant);
+        }
+
+        query += ` ORDER BY e.created_at DESC`;
+
+        const result = await client.query(query, values);
+        res.status(200).send(result.rows);
+    } catch (err) {
+        console.error("Error in entry.findByDate:", err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
 // Approve Entry
 exports.approve = async (req, res) => {
     try {
