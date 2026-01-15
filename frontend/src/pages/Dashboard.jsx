@@ -358,7 +358,6 @@ const Dashboard = () => {
                                                                 >
                                                                     <CheckCircle size={16} />
                                                                 </button>
-                                                            )}
                                                                 {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
                                                                     <button
                                                                         className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
@@ -370,72 +369,72 @@ const Dashboard = () => {
                                                                     >
                                                                         <XCircle size={16} />
                                                                     </button>
-                                                                </>
+                                                                )}
+                                                                <button
+                                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                                                    onClick={() => {
+                                                                        setEditMode(log.id);
+                                                                        setEditData({ ...log });
+                                                                    }}
+                                                                    title="Edit Log"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                )}
+                                                        {isSuperAdmin && (
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
+                                                                onClick={() => handleAction(log.id, 'delete')}
+                                                                title="Soft Delete (Super Admin Only)"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                        {log.status === 'In' && log.approval_status === 'Approved' && (
+                                                            <button
+                                                                className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
+                                                                onClick={() => handleExit(log.id)}
+                                                                title="Register Exit"
+                                                            >
+                                                                <DoorOpen size={16} />
+                                                            </button>
                                                         )}
                                                         <button
-                                                            className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
-                                                            onClick={() => {
-                                                                setEditMode(log.id);
-                                                                setEditData({ ...log });
-                                                            }}
-                                                            title="Edit Log"
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
+                                                            title="Print Voucher"
+                                                            onClick={() => window.open(`/print/${log.id}`, '_blank')}
                                                         >
-                                                            <Edit2 size={16} />
+                                                            <Printer size={16} />
                                                         </button>
                                                     </>
                                                 )}
-                                                {isSuperAdmin && (
-                                                    <button
-                                                        className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
-                                                        onClick={() => handleAction(log.id, 'delete')}
-                                                        title="Soft Delete (Super Admin Only)"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                                {log.status === 'In' && log.approval_status === 'Approved' && (
-                                                    <button
-                                                        className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
-                                                        onClick={() => handleExit(log.id)}
-                                                        title="Register Exit"
-                                                    >
-                                                        <DoorOpen size={16} />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
-                                                    title="Print Voucher"
-                                                    onClick={() => window.open(`/print/${log.id}`, '_blank')}
-                                                >
-                                                    <Printer size={16} />
-                                                </button>
-                                            </>
-                                                )}
-                                        </div>
-                                    </td>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-        </div>
 
-                {/* Photo Modal */ }
-    {
-        showPhoto && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
-                <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-                    <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
-                    <button
-                        className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
-                        onClick={() => setShowPhoto(null)}
-                    >
-                        <XCircle size={20} />
-                    </button>
-                </div>
-            </div>
-        )
-    }
+                {/* Photo Modal */}
+                {
+                    showPhoto && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
+                            <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                                <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
+                                <button
+                                    className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
+                                    onClick={() => setShowPhoto(null)}
+                                >
+                                    <XCircle size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    )
+                }
             </main >
         </div >
     );
