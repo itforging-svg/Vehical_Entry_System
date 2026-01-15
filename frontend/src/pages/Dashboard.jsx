@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     LogOut, CheckCircle, XCircle, Printer, DoorOpen,
     Users, Clock, Search, Edit2, Trash2,
-    Calendar, Car, User, FileText, Info
+    Calendar, Car, User, FileText, Info, Save
 } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api';
@@ -244,29 +244,92 @@ const Dashboard = () => {
                                         </td>
                                         <td className="p-4">
                                             {editMode === log.id ? (
-                                                <div className="flex flex-col gap-2 min-w-[300px] p-2 bg-white rounded shadow-xl border border-slate-200 z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                    <h3 className="text-sm font-bold text-slate-800 mb-2 border-b pb-1">Edit Entry</h3>
-                                                    <div className="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto p-1">
-                                                        <input className="input-xs" placeholder="Driver Name" value={editData.driver_name} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Vehicle Reg" value={editData.vehicle_reg} onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Transporter" value={editData.transporter || ''} onChange={e => setEditData({ ...editData, transporter: e.target.value })} />
-                                                        <input className="input-xs" placeholder="License No" value={editData.license_no || ''} onChange={e => setEditData({ ...editData, license_no: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Vehicle Type" value={editData.vehicle_type || ''} onChange={e => setEditData({ ...editData, vehicle_type: e.target.value })} />
-                                                        <input className="input-xs" placeholder="PUC Validity" type="date" value={editData.puc_validity ? editData.puc_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, puc_validity: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Ins. Validity" type="date" value={editData.insurance_validity ? editData.insurance_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, insurance_validity: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Chassis Last 5" value={editData.chassis_last_5 || ''} onChange={e => setEditData({ ...editData, chassis_last_5: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Engine Last 5" value={editData.engine_last_5 || ''} onChange={e => setEditData({ ...editData, engine_last_5: e.target.value })} />
-                                                        <input className="input-xs" placeholder="Material" value={editData.material_details || ''} onChange={e => setEditData({ ...editData, material_details: e.target.value })} />
-                                                        <input className="input-xs col-span-2" placeholder="Purpose" value={editData.purpose} onChange={e => setEditData({ ...editData, purpose: e.target.value })} />
-                                                        <select className="input-xs col-span-2" value={editData.plant || ''} onChange={e => setEditData({ ...editData, plant: e.target.value })}>
-                                                            {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
-                                                                <option key={p} value={p}>{p}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="flex justify-end gap-2 mt-2 pt-2 border-t">
-                                                        <button onClick={() => setEditMode(null)} className="px-3 py-1 bg-slate-100 rounded text-xs">Cancel</button>
-                                                        <button onClick={() => handleUpdate(log.id)} className="px-3 py-1 bg-amber-500 text-white rounded text-xs">Save</button>
+                                                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up">
+                                                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                                            <div>
+                                                                <h3 className="text-lg font-black text-slate-800 tracking-tight">Edit Entry Details</h3>
+                                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Update record information</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setEditMode(null)}
+                                                                className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-300 transition-colors"
+                                                            >
+                                                                <XCircle size={20} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="p-6 overflow-y-auto custom-scrollbar">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Driver Name</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Driver Name" value={editData.driver_name} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vehicle Reg</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all uppercase" placeholder="Vehicle Reg" value={editData.vehicle_reg} onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transporter</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Transporter" value={editData.transporter || ''} onChange={e => setEditData({ ...editData, transporter: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">License No</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="License No" value={editData.license_no || ''} onChange={e => setEditData({ ...editData, license_no: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vehicle Type</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Vehicle Type" value={editData.vehicle_type || ''} onChange={e => setEditData({ ...editData, vehicle_type: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PUC Validity</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" type="date" value={editData.puc_validity ? editData.puc_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, puc_validity: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Insurance Validity</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" type="date" value={editData.insurance_validity ? editData.insurance_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, insurance_validity: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chassis (Last 5)</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Chassis Last 5" value={editData.chassis_last_5 || ''} onChange={e => setEditData({ ...editData, chassis_last_5: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Engine (Last 5)</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Engine Last 5" value={editData.engine_last_5 || ''} onChange={e => setEditData({ ...editData, engine_last_5: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Material Details</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Material" value={editData.material_details || ''} onChange={e => setEditData({ ...editData, material_details: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1 md:col-span-2">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Purpose</label>
+                                                                    <input className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Purpose" value={editData.purpose} onChange={e => setEditData({ ...editData, purpose: e.target.value })} />
+                                                                </div>
+                                                                <div className="space-y-1 md:col-span-2">
+                                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plant / Division</label>
+                                                                    <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer" value={editData.plant || ''} onChange={e => setEditData({ ...editData, plant: e.target.value })}>
+                                                                        {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
+                                                                            <option key={p} value={p}>{p}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                                                            <button
+                                                                onClick={() => setEditMode(null)}
+                                                                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-white hover:text-slate-800 transition-all border border-transparent hover:border-slate-200"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleUpdate(log.id)}
+                                                                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-amber-500 text-slate-900 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+                                                            >
+                                                                <Save size={16} /> Save Changes
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -370,71 +433,73 @@ const Dashboard = () => {
                                                                         <XCircle size={16} />
                                                                     </button>
                                                                 )}
-                                                                <button
-                                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
-                                                                    onClick={() => {
-                                                                        setEditMode(log.id);
-                                                                        setEditData({ ...log });
-                                                                    }}
-                                                                    title="Edit Log"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                )}
-                                                        {isSuperAdmin && (
-                                                            <button
-                                                                className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
-                                                                onClick={() => handleAction(log.id, 'delete')}
-                                                                title="Soft Delete (Super Admin Only)"
-                                                            >
-                                                                <Trash2 size={16} />
                                                             </button>
-                                                        )}
-                                                        {log.status === 'In' && log.approval_status === 'Approved' && (
-                                                            <button
-                                                                className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
-                                                                onClick={() => handleExit(log.id)}
-                                                                title="Register Exit"
-                                                            >
-                                                                <DoorOpen size={16} />
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
-                                                            title="Print Voucher"
-                                                            onClick={() => window.open(`/print/${log.id}`, '_blank')}
-                                                        >
-                                                            <Printer size={16} />
-                                                        </button>
+                                                                )}
                                                     </>
                                                 )}
-                                            </div>
-                                        </td>
+                                                <button
+                                                    className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                                    onClick={() => {
+                                                        setEditMode(log.id);
+                                                        setEditData({ ...log });
+                                                    }}
+                                                    title="Edit Log"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                )}
+                                                {isSuperAdmin && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
+                                                        onClick={() => handleAction(log.id, 'delete')}
+                                                        title="Soft Delete (Super Admin Only)"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                                {log.status === 'In' && log.approval_status === 'Approved' && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
+                                                        onClick={() => handleExit(log.id)}
+                                                        title="Register Exit"
+                                                    >
+                                                        <DoorOpen size={16} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
+                                                    title="Print Voucher"
+                                                    onClick={() => window.open(`/print/${log.id}`, '_blank')}
+                                                >
+                                                    <Printer size={16} />
+                                                </button>
+                                            </>
+                                                )}
+                                        </div>
+                                    </td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
+        </div>
 
-                {/* Photo Modal */}
-                {
-                    showPhoto && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
-                            <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-                                <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
-                                <button
-                                    className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
-                                    onClick={() => setShowPhoto(null)}
-                                >
-                                    <XCircle size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    )
-                }
+                {/* Photo Modal */ }
+    {
+        showPhoto && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={() => setShowPhoto(null)}>
+                <div className="relative max-w-4xl w-full bg-white rounded-3xl p-2 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                    <img src={showPhoto} alt="Vehicle Full View" className="w-full h-auto rounded-2xl border border-slate-100" />
+                    <button
+                        className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl hover:bg-red-500 hover:text-white transition-all font-bold border border-slate-100"
+                        onClick={() => setShowPhoto(null)}
+                    >
+                        <XCircle size={20} />
+                    </button>
+                </div>
+            </div>
+        )
+    }
             </main >
         </div >
     );

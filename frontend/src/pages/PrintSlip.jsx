@@ -37,7 +37,13 @@ const PrintSlip = () => {
         </div>
     </div>;
 
-    if (!log) return <div className="p-20 text-center">Pass not found.</div>;
+    if (!log) return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center gap-4">
+            <h1 className="text-xl font-bold text-red-500">Pass Details Not Found</h1>
+            <p className="text-slate-500">Could not retrieve gate pass for ID: {id}</p>
+            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-slate-200 rounded">Retry</button>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-10 flex flex-col items-center">
