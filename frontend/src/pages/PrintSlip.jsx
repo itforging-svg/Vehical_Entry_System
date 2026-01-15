@@ -10,15 +10,20 @@ const PrintSlip = () => {
     const navigate = useNavigate();
     const [log, setLog] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchLog = async () => {
+            console.log("Fetching log for ID:", id);
             try {
                 const res = await api.get(`/entry/${id}`);
+                console.log("Log received:", res.data);
                 setLog(res.data);
             } catch (err) {
                 console.error("Error fetching log:", err);
-                alert("Failed to load gate pass details.");
+                const msg = err.response?.data?.message || err.message;
+                setError(msg);
+                alert("Failed to load gate pass details: " + msg);
             } finally {
                 setLoading(false);
             }
@@ -40,8 +45,13 @@ const PrintSlip = () => {
     if (!log) return (
         <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center gap-4">
             <h1 className="text-xl font-bold text-red-500">Pass Details Not Found</h1>
-            <p className="text-slate-500">Could not retrieve gate pass for ID: {id}</p>
-            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-slate-200 rounded">Retry</button>
+            <p className="text-slate-500 tracking-tight font-medium">
+                {error ? `Reason: ${error}` : `Could not retrieve gate pass for ID: ${id}`}
+            </p>
+            <div className="flex gap-4">
+                <button onClick={() => navigate(-1)} className="px-6 py-2 bg-slate-200 rounded-xl font-bold text-xs uppercase tracking-widest">Go Back</button>
+                <button onClick={() => window.location.reload()} className="px-6 py-2 bg-amber-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20">Retry</button>
+            </div>
         </div>
     );
 

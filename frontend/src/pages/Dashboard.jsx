@@ -464,7 +464,7 @@ const Dashboard = () => {
                                                         <button
                                                             className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
                                                             title="Print Voucher"
-                                                            onClick={() => window.open(`/print/${log.id}`, '_blank')}
+                                                            onClick={() => window.open(`/print/${log.gate_pass_no || log.id}`, '_blank')}
                                                         >
                                                             <Printer size={16} />
                                                         </button>
