@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { ShieldCheck, User, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import './Login.css';
@@ -20,7 +20,7 @@ const Login = () => {
         setError('');
         setLoading(true);
         try {
-            const res = await axios.post('http://localhost:5001/api/auth/signin', credentials);
+            const res = await api.post('/auth/signin', credentials);
             const { accessToken, roles, username, id } = res.data;
 
             localStorage.setItem('token', accessToken);

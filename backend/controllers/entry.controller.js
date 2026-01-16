@@ -23,6 +23,28 @@ client.connect()
         console.error('Check if PostgreSQL is running and credentials in .env are correct.');
     });
 
+// Helper to get Realtime IST
+const getRealTimeIST = () => {
+    // Get current UTC time
+    const now = new Date();
+
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+
+    // Manually construct IST time string with timezone offset
+    const year = istTime.getUTCFullYear();
+    const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(istTime.getUTCDate()).padStart(2, '0');
+    const hours = String(istTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(istTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(istTime.getUTCSeconds()).padStart(2, '0');
+    const milliseconds = String(istTime.getUTCMilliseconds()).padStart(3, '0');
+
+    // Format: YYYY-MM-DDTHH:MM:SS.mmm+05:30
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}+05:30`;
+};
+
 // Register Entry
 exports.create = async (req, res) => {
     try {
@@ -38,10 +60,23 @@ exports.create = async (req, res) => {
             engine_last_5,
             purpose,
             material_details,
-            entry_time,
+            // entry_time, // Ignored from client
             transporter,
             photos // Array of dataURLs
         } = req.body;
+        // Check Blacklist
+        const blacklistCheck = await client.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [vehicle_reg.toUpperCase()]);
+        if (blacklistCheck.rows.length > 0) {
+            const block = blacklistCheck.rows[0];
+            return res.status(403).send({
+                message: `BLOCKED: This vehicle is blacklisted.\nReason: ${block.reason || 'Not specified'}`
+            });
+        }
+
+        // Fetch Realtime IST
+        console.log("Generating Realtime IST...");
+        const entry_time = getRealTimeIST();
+        console.log("Determined Entry Time:", entry_time);
 
         // Auto-detect category
         const hvTypes = ['Truck', 'Hydra', 'JCB', 'Dumper'];
@@ -121,8 +156,11 @@ exports.updateExit = async (req, res) => {
 exports.findToday = async (req, res) => {
     try {
         let query = `
-            SELECT e.* 
+            SELECT e.*, 
+                   CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
+                   b.reason as blacklist_reason
             FROM entry_logs e
+            LEFT JOIN vehicle_blacklist b ON e.vehicle_reg = b.vehicle_no
             WHERE e.created_at::date = CURRENT_DATE AND e.deleted_at IS NULL
         `;
         let values = [];
@@ -148,8 +186,11 @@ exports.findByDate = async (req, res) => {
     try {
         const { date } = req.query; // Format: YYYY-MM-DD
         let query = `
-            SELECT e.* 
+            SELECT e.*,
+                   CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
+                   b.reason as blacklist_reason
             FROM entry_logs e
+            LEFT JOIN vehicle_blacklist b ON e.vehicle_reg = b.vehicle_no
             WHERE e.created_at::date = $1 AND e.deleted_at IS NULL
         `;
         let values = [date || new Date().toISOString().split('T')[0]];

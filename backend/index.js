@@ -20,8 +20,10 @@ app.get('/', (req, res) => {
 // Import Routes
 const entryRoutes = require('./routes/entry.routes');
 const authRoutes = require('./routes/auth.routes');
+const blacklistRoutes = require('./routes/blacklist.routes');
 app.use('/api/entry', entryRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/blacklist', blacklistRoutes);
 
 // Database environment validation
 if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_PASSWORD) {

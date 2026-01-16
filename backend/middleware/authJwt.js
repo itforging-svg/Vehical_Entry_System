@@ -17,11 +17,14 @@ const verifyToken = (req, res, next) => {
 
     jwt.verify(token, process.env.JWT_SECRET || 'secret-key', (err, decoded) => {
         if (err) {
+            console.error("JWT Verification Error:", err.message);
             return res.status(401).send({ message: "Unauthorized!" });
         }
         req.userId = decoded.id;
         req.userRole = decoded.role;
         req.userPlant = decoded.plant;
+        req.username = decoded.username; // Added this
+        console.log(`VerifyToken: User=${req.username}, Role=${req.userRole}`);
         next();
     });
 };

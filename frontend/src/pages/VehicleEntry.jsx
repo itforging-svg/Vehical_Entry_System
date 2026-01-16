@@ -63,6 +63,18 @@ const VehicleEntry = () => {
         setFormData({ ...formData, [name]: finalValue });
     };
 
+    const checkBlacklist = async () => {
+        if (!formData.vehicle_reg) return;
+        try {
+            const res = await api.get(`/blacklist/check/${formData.vehicle_reg}`);
+            if (res.data.blacklisted) {
+                alert(`⚠️ BLACKLISTED VEHICLE DETECTED ⚠️\n\nVehicle: ${formData.vehicle_reg}\nReason: ${res.data.reason || 'No reason provided'}\n\nEntry will be blocked.`);
+            }
+        } catch (err) {
+            console.error("Blacklist check error:", err);
+        }
+    };
+
     const capturePhoto = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
         if (imageSrc) {
@@ -77,13 +89,13 @@ const VehicleEntry = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Exclude entry_time, backend will set it to Realtime IST
+            const { entry_time, ...submitData } = formData;
             const res = await api.post('/entry', {
-                ...formData,
+                ...submitData,
                 photos: photos
             });
-            if (window.confirm(`Entry Registered Successfully!\nGate Pass No: ${res.data.gate_pass_no}\n\nDo you want to print the voucher now?`)) {
-                window.open(`/print/${res.data.id}`, '_blank');
-            }
+            alert(`Entry Registered Successfully!\nGate Pass No: ${res.data.gate_pass_no}`);
             window.location.reload();
         } catch (err) {
             console.error("Submission error:", err);
@@ -274,6 +286,7 @@ const VehicleEntry = () => {
                                             name="vehicle_reg"
                                             value={formData.vehicle_reg}
                                             onChange={handleChange}
+                                            onBlur={checkBlacklist}
                                             className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-mono uppercase tracking-widest text-center"
                                             placeholder="GJ 05 AB 1234"
                                             required
