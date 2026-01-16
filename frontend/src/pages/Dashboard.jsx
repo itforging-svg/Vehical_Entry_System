@@ -175,7 +175,7 @@ const Dashboard = () => {
     const stats = {
         today: logs.length,
         pending: logs.filter(l => l.approval_status === 'Pending').length,
-        inside: logs.filter(l => l.status === 'In' && l.approval_status !== 'Rejected').length
+        inside: logs.filter(l => l.status === 'In' && l.approval_status === 'Approved').length
     };
 
     const handleLogout = () => {
@@ -346,115 +346,24 @@ const Dashboard = () => {
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                {editMode === log.id ? (
-                                                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                                                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up" style={{ transform: 'scale(0.70)', transformOrigin: 'center', maxWidth: '1000px' }}>
-                                                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                                                <div>
-                                                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">Edit Entry Details</h3>
-                                                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Update record information</p>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => setEditMode(null)}
-                                                                    className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-300 transition-colors"
-                                                                >
-                                                                    <XCircle size={20} />
-                                                                </button>
-                                                            </div>
-
-                                                            <div className="p-6 overflow-y-auto custom-scrollbar">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Driver Name</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Driver Name" value={editData.driver_name} onChange={e => setEditData({ ...editData, driver_name: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Vehicle Reg</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all uppercase" placeholder="Vehicle Reg" value={editData.vehicle_reg} onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transporter</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Transporter" value={editData.transporter || ''} onChange={e => setEditData({ ...editData, transporter: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">License No</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="License No" value={editData.license_no || ''} onChange={e => setEditData({ ...editData, license_no: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Vehicle Type</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Vehicle Type" value={editData.vehicle_type || ''} onChange={e => setEditData({ ...editData, vehicle_type: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">PUC Valid</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" type="date" value={editData.puc_validity ? editData.puc_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, puc_validity: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Insurance</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" type="date" value={editData.insurance_validity ? editData.insurance_validity.split('T')[0] : ''} onChange={e => setEditData({ ...editData, insurance_validity: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Chassis</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Chassis Last 5" value={editData.chassis_last_5 || ''} onChange={e => setEditData({ ...editData, chassis_last_5: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Engine</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Engine Last 5" value={editData.engine_last_5 || ''} onChange={e => setEditData({ ...editData, engine_last_5: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Material</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Material" value={editData.material_details || ''} onChange={e => setEditData({ ...editData, material_details: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2 md:col-span-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Purpose</label>
-                                                                        <input className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" placeholder="Purpose" value={editData.purpose} onChange={e => setEditData({ ...editData, purpose: e.target.value })} />
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2 md:col-span-2">
-                                                                        <label className="w-28 flex-shrink-0 text-[9px] font-black text-slate-400 uppercase tracking-widest">Plant / Div</label>
-                                                                        <select className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer" value={editData.plant || ''} onChange={e => setEditData({ ...editData, plant: e.target.value })}>
-                                                                            {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
-                                                                                <option key={p} value={p}>{p}</option>
-                                                                            ))}
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                                                                <button
-                                                                    onClick={() => setEditMode(null)}
-                                                                    className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-white hover:text-slate-800 transition-all border border-transparent hover:border-slate-200"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleUpdate(log.id)}
-                                                                    className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-amber-500 text-slate-900 hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
-                                                                >
-                                                                    <Save size={16} /> Save Changes
-                                                                </button>
-                                                            </div>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <User size={12} className="text-slate-400" />
+                                                        <div className="font-bold text-slate-900 text-sm">{log.driver_name}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Car size={12} className="text-slate-400" />
+                                                        <div className={`font-mono text-xs font-semibold px-1.5 py-0.5 rounded uppercase flex items-center gap-1.5 ${log.is_blacklisted ? 'bg-red-600 text-white border-red-700 shadow-sm' : 'bg-white text-slate-500 border-slate-200 border'}`}>
+                                                            {log.is_blacklisted && <ShieldAlert size={10} className="animate-pulse" />}
+                                                            {log.vehicle_reg}
                                                         </div>
                                                     </div>
-                                                ) : (
-                                                    <div className="flex flex-col">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <User size={12} className="text-slate-400" />
-                                                            <div className="font-bold text-slate-900 text-sm">{log.driver_name}</div>
+                                                    {log.is_blacklisted && (
+                                                        <div className="mt-1 text-[9px] font-black text-red-600 uppercase tracking-tighter flex items-center gap-1">
+                                                            <AlertTriangle size={8} /> BLACKLISTED: {log.blacklist_reason || 'NO REASON'}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Car size={12} className="text-slate-400" />
-                                                            <div className={`font-mono text-xs font-semibold px-1.5 py-0.5 rounded uppercase flex items-center gap-1.5 ${log.is_blacklisted ? 'bg-red-600 text-white border-red-700 shadow-sm' : 'bg-white text-slate-500 border-slate-200 border'}`}>
-                                                                {log.is_blacklisted && <ShieldAlert size={10} className="animate-pulse" />}
-                                                                {log.vehicle_reg}
-                                                            </div>
-                                                        </div>
-                                                        {log.is_blacklisted && (
-                                                            <div className="mt-1 text-[9px] font-black text-red-600 uppercase tracking-tighter flex items-center gap-1">
-                                                                <AlertTriangle size={8} /> BLACKLISTED: {log.blacklist_reason || 'NO REASON'}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex flex-col gap-1">
@@ -490,9 +399,9 @@ const Dashboard = () => {
                                             <td className="p-4">
                                                 <div className="flex flex-col gap-2">
                                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border
-                                                    ${log.status === 'In' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
-                                                        <span className={`w-1 h-1 rounded-full ${log.status === 'In' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
-                                                        {log.status === 'In' ? 'INSIDE' : 'EXITED'}
+                                                    ${(log.status === 'In' && log.approval_status === 'Approved') ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : (log.status === 'In' && log.approval_status === 'Pending') ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                                                        <span className={`w-1 h-1 rounded-full ${(log.status === 'In' && log.approval_status === 'Approved') ? 'bg-emerald-500 animate-pulse' : (log.status === 'In' && log.approval_status === 'Pending') ? 'bg-amber-500' : 'bg-slate-300'}`}></span>
+                                                        {log.status === 'In' ? (log.approval_status === 'Approved' ? 'INSIDE' : 'WAITING ENTRY') : 'EXITED'}
                                                     </span>
                                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide border w-fit
                                                     ${log.approval_status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
@@ -504,92 +413,73 @@ const Dashboard = () => {
                                             </td>
                                             <td className="p-4 pr-8">
                                                 <div className="flex justify-center gap-2">
-                                                    {editMode === log.id ? (
-                                                        <>
+                                                    <div className="flex justify-center gap-2">
+                                                        {(isSuperAdmin || log.approval_status === 'Pending') && (
                                                             <button
                                                                 className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
-                                                                onClick={() => handleUpdate(log.id)}
-                                                                title="Save Change"
+                                                                onClick={() => handleAction(log.id, 'approve')}
+                                                                title="Approve Entrance"
                                                             >
                                                                 <CheckCircle size={16} />
                                                             </button>
+                                                        )}
+                                                        {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
                                                             <button
                                                                 className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
-                                                                onClick={() => setEditMode(null)}
-                                                                title="Cancel"
+                                                                onClick={() => {
+                                                                    const reason = window.prompt("Rejection reason:");
+                                                                    if (reason) handleAction(log.id, 'reject', { reason });
+                                                                }}
+                                                                title="Reject Entrance"
                                                             >
                                                                 <XCircle size={16} />
                                                             </button>
-                                                        </>
-                                                    ) : (
-                                                        <div className="flex justify-center gap-2">
-                                                            {(isSuperAdmin || log.approval_status === 'Pending') && (
+                                                        )}
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-md border-2 border-orange-300"
+                                                            onClick={() => {
+                                                                setEditMode(log.id);
+                                                                setEditData({ ...log });
+                                                            }}
+                                                            title="Edit Log"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        {isSuperAdmin && (
+                                                            <>
                                                                 <button
-                                                                    className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
-                                                                    onClick={() => handleAction(log.id, 'approve')}
-                                                                    title="Approve Entrance"
+                                                                    className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
+                                                                    onClick={() => handleAction(log.id, 'delete')}
+                                                                    title="Soft Delete (Super Admin Only)"
                                                                 >
-                                                                    <CheckCircle size={16} />
+                                                                    <Trash2 size={16} />
                                                                 </button>
-                                                            )}
-                                                            {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
                                                                 <button
-                                                                    className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
-                                                                    onClick={() => {
-                                                                        const reason = window.prompt("Rejection reason:");
-                                                                        if (reason) handleAction(log.id, 'reject', { reason });
-                                                                    }}
-                                                                    title="Reject Entrance"
+                                                                    className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center hover:bg-red-700 transition-all shadow-md border border-white/10"
+                                                                    onClick={() => handleBlacklistFromLog(log)}
+                                                                    title="Blacklist Vehicle (Super Admin Only)"
                                                                 >
-                                                                    <XCircle size={16} />
+                                                                    <ShieldAlert size={16} />
                                                                 </button>
-                                                            )}
+                                                            </>
+                                                        )}
+                                                        {log.status === 'In' && log.approval_status === 'Approved' && (
                                                             <button
-                                                                className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-md border-2 border-orange-300"
-                                                                onClick={() => {
-                                                                    setEditMode(log.id);
-                                                                    setEditData({ ...log });
-                                                                }}
-                                                                title="Edit Log"
+                                                                className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
+                                                                onClick={() => handleExit(log.id)}
+                                                                title="Register Exit"
                                                             >
-                                                                <Edit2 size={16} />
+                                                                <DoorOpen size={16} />
                                                             </button>
-                                                            {isSuperAdmin && (
-                                                                <>
-                                                                    <button
-                                                                        className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-md group/del"
-                                                                        onClick={() => handleAction(log.id, 'delete')}
-                                                                        title="Soft Delete (Super Admin Only)"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center hover:bg-red-700 transition-all shadow-md border border-white/10"
-                                                                        onClick={() => handleBlacklistFromLog(log)}
-                                                                        title="Blacklist Vehicle (Super Admin Only)"
-                                                                    >
-                                                                        <ShieldAlert size={16} />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {log.status === 'In' && log.approval_status === 'Approved' && (
-                                                                <button
-                                                                    className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100"
-                                                                    onClick={() => handleExit(log.id)}
-                                                                    title="Register Exit"
-                                                                >
-                                                                    <DoorOpen size={16} />
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
-                                                                title="Print Voucher"
-                                                                onClick={() => window.open(`/print/${log.gate_pass_no || log.id}`, '_blank')}
-                                                            >
-                                                                <Printer size={16} />
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                        <button
+                                                            className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-all border border-slate-200"
+                                                            title="Print Voucher"
+                                                            onClick={() => window.open(`/print/${log.gate_pass_no || log.id}`, '_blank')}
+                                                        >
+                                                            <Printer size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -729,7 +619,194 @@ const Dashboard = () => {
                         </div>
                     </div>
                 )}
-            </main >
+            </main>
+
+            {/* Redesigned Edit Modal - Top Level */}
+            {editMode && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up border border-slate-100">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                                    <div className="p-2 bg-amber-100 rounded-xl text-amber-600">
+                                        <Edit2 size={24} />
+                                    </div>
+                                    Edit Entry Record
+                                </h3>
+                                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Official Gate Pass Modification</p>
+                            </div>
+                            <button
+                                onClick={() => setEditMode(null)}
+                                className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all border border-slate-200"
+                            >
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Driver Details */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                        <User size={14} className="text-amber-500" /> Driver Information
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Driver Full Name</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.driver_name}
+                                            onChange={e => setEditData({ ...editData, driver_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Licence Number</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.license_no || ''}
+                                            onChange={e => setEditData({ ...editData, license_no: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Vehicle Details */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                        <Car size={14} className="text-amber-500" /> Vehicle Identification
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Registration Number</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-lg text-slate-800 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all uppercase font-mono tracking-widest"
+                                            value={editData.vehicle_reg}
+                                            onChange={e => setEditData({ ...editData, vehicle_reg: e.target.value.toUpperCase() })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Vehicle Classification</label>
+                                        <select
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                                            value={editData.vehicle_type || ''}
+                                            onChange={e => setEditData({ ...editData, vehicle_type: e.target.value })}
+                                        >
+                                            <option value="">Select Type</option>
+                                            <optgroup label="LV (Light Vehicles)">
+                                                <option value="LV - Sedan/SUV">LMV (Sedan/SUV)</option>
+                                                <option value="LV - Pickup">LMV (Pickup)</option>
+                                                <option value="LV - Tempo">LMV (Tempo)</option>
+                                            </optgroup>
+                                            <optgroup label="HV (Heavy Vehicles)">
+                                                <option value="HV - Truck">HV (Truck)</option>
+                                                <option value="HV - Hydra">HV (Hydra)</option>
+                                                <option value="HV - JCB">HV (JCB)</option>
+                                                <option value="HV - Dumper">HV (Dumper)</option>
+                                                <option value="HV - Trailer">HV (Trailer)</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Logistics Details */}
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-50">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Plant / Division</label>
+                                        <select
+                                            className="w-full p-4 bg-slate-100/50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                                            value={editData.plant || ''}
+                                            onChange={e => setEditData({ ...editData, plant: e.target.value })}
+                                        >
+                                            {['Seamless Division', 'Forging Division', 'Main Plant', 'Bright Bar', 'Flat Bar', 'Wire Plant', 'Main Plant 2 ( SMS 2 )', '40"Inch Mill'].map(p => (
+                                                <option key={p} value={p}>{p}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Transporter / Party Name</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.transporter || ''}
+                                            onChange={e => setEditData({ ...editData, transporter: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Technical Validity */}
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-6 pt-4 border-t border-slate-50">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">PUC Validity</label>
+                                        <input
+                                            type="date"
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.puc_validity ? editData.puc_validity.split('T')[0] : ''}
+                                            onChange={e => setEditData({ ...editData, puc_validity: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Insurance Validity</label>
+                                        <input
+                                            type="date"
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.insurance_validity ? editData.insurance_validity.split('T')[0] : ''}
+                                            onChange={e => setEditData({ ...editData, insurance_validity: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Chassis (Last 5)</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.chassis_last_5 || ''}
+                                            onChange={e => setEditData({ ...editData, chassis_last_5: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Engine (Last 5)</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.engine_last_5 || ''}
+                                            onChange={e => setEditData({ ...editData, engine_last_5: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Entry Context */}
+                                <div className="md:col-span-2 space-y-6 pt-4 border-t border-slate-50">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Purpose of Entry</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.purpose}
+                                            onChange={e => setEditData({ ...editData, purpose: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Material Load Details</label>
+                                        <textarea
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all min-h-[100px]"
+                                            value={editData.material_details || ''}
+                                            onChange={e => setEditData({ ...editData, material_details: e.target.value })}
+                                            rows="3"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 border-t border-slate-100 bg-slate-50 flex justify-end gap-4 shadow-inner">
+                            <button
+                                onClick={() => setEditMode(null)}
+                                className="px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-white hover:text-slate-800 transition-all border border-transparent hover:border-slate-200"
+                            >
+                                Discard Changes
+                            </button>
+                            <button
+                                onClick={() => handleUpdate(editMode)}
+                                className="px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-widest bg-amber-500 text-slate-900 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20 flex items-center gap-2"
+                            >
+                                <Save size={18} /> Sync & Update Record
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
