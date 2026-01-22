@@ -1,0 +1,3 @@
+﻿COLUMNS_LIST_START
+approval_status, approved_by, challan_no, chassis_last_5, created_at, deleted_at, driver_name, engine_last_5, entry_time, exit_time, gate_pass_no, id, insurance_validity, invoice_no, license_no, material_details, photo_url, plant, puc_validity, purpose, rejection_reason, security_person_name, status, transporter, vehicle_reg, vehicle_type
+COLUMNS_LIST_END

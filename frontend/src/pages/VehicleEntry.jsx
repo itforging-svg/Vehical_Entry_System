@@ -23,7 +23,11 @@ const VehicleEntry = () => {
         purpose: '',
         material_details: '',
         entry_time: '',
-        transporter: ''
+        transporter: '',
+        aadhar_no: '',
+        driver_mobile: '',
+        challan_no: '',
+        security_person_name: ''
     });
 
     useEffect(() => {
@@ -54,6 +58,18 @@ const VehicleEntry = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         if ((name === 'chassis_last_5' || name === 'engine_last_5') && value.length > 5) return;
+
+        // Validation for Mobile (10 digits only)
+        if (name === 'driver_mobile') {
+            if (!/^\d*$/.test(value)) return; // Only numbers
+            if (value.length > 10) return;     // Max 10 digits
+        }
+
+        // Validation for Aadhar (12 digits only)
+        if (name === 'aadhar_no') {
+            if (!/^\d*$/.test(value)) return; // Only numbers
+            if (value.length > 12) return;     // Max 12 digits
+        }
 
         let finalValue = value;
         if (name === 'vehicle_reg') {
@@ -257,6 +273,34 @@ const VehicleEntry = () => {
                                     </div>
 
                                     <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Driver Mobile No</label>
+                                        <input
+                                            type="text"
+                                            name="driver_mobile"
+                                            value={formData.driver_mobile}
+                                            onChange={handleChange}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            placeholder="10 Digit Mobile No"
+                                            maxLength={10}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Aadhar Card No</label>
+                                        <input
+                                            type="text"
+                                            name="aadhar_no"
+                                            value={formData.aadhar_no}
+                                            onChange={handleChange}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                                            placeholder="12 Digit Aadhar No"
+                                            maxLength={12}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Vehicle Classification</label>
                                         <select
                                             name="vehicle_type"
@@ -290,6 +334,18 @@ const VehicleEntry = () => {
                                             className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-mono uppercase tracking-widest text-center"
                                             placeholder="GJ 05 AB 1234"
                                             required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Challan No</label>
+                                        <input
+                                            type="text"
+                                            name="challan_no"
+                                            value={formData.challan_no}
+                                            onChange={handleChange}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            placeholder="Enter Challan No"
                                         />
                                     </div>
 
@@ -398,6 +454,19 @@ const VehicleEntry = () => {
                                             className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all min-h-[80px]"
                                             placeholder="Itemized list of materials..."
                                             rows="2"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Security Person Name</label>
+                                        <input
+                                            type="text"
+                                            name="security_person_name"
+                                            value={formData.security_person_name}
+                                            onChange={handleChange}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            placeholder="Enter Security Person Name"
+                                            required
                                         />
                                     </div>
                                 </div>

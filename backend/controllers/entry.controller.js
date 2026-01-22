@@ -62,6 +62,10 @@ exports.create = async (req, res) => {
             material_details,
             // entry_time, // Ignored from client
             transporter,
+            aadhar_no,
+            driver_mobile,
+            challan_no,
+            security_person_name,
             photos // Array of dataURLs
         } = req.body;
         // Check Blacklist
@@ -112,16 +116,18 @@ exports.create = async (req, res) => {
                 plant, vehicle_reg, driver_name, license_no, vehicle_type, 
                 puc_validity, insurance_validity, chassis_last_5, 
                 engine_last_5, purpose, material_details, gate_pass_no, 
-                entry_time, photo_url, status, transporter
+                entry_time, photo_url, status, transporter, aadhar_no, driver_mobile,
+                challan_no, security_person_name
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In', $15)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In', $15, $16, $17, $18, $19)
             RETURNING *
         `;
         const values = [
             plant, vehicle_reg, driver_name, license_no, vehicle_type,
             puc_validity, insurance_validity, chassis_last_5,
             engine_last_5, purpose, material_details, gate_pass_no,
-            entry_time, JSON.stringify(photos || []), transporter
+            entry_time, JSON.stringify(photos || []), transporter, aadhar_no, driver_mobile,
+            challan_no, security_person_name
         ];
         const result = await client.query(query, values);
         res.status(201).send(result.rows[0]);
@@ -255,7 +261,8 @@ exports.update = async (req, res) => {
         const {
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
-            chassis_last_5, engine_last_5, material_details
+            chassis_last_5, engine_last_5, material_details,
+            challan_no, security_person_name
         } = req.body;
 
         const query = `
@@ -264,14 +271,16 @@ exports.update = async (req, res) => {
                 driver_name = $1, vehicle_reg = $2, purpose = $3, transporter = $4,
                 plant = $5, license_no = $6, vehicle_type = $7, puc_validity = $8,
                 insurance_validity = $9, chassis_last_5 = $10, engine_last_5 = $11, 
-                material_details = $12
-            WHERE id = $13 AND deleted_at IS NULL
+                material_details = $12, challan_no = $13,
+                security_person_name = $14
+            WHERE id = $15 AND deleted_at IS NULL
             RETURNING *
         `;
         const values = [
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
-            chassis_last_5, engine_last_5, material_details, id
+            chassis_last_5, engine_last_5, material_details,
+            challan_no, security_person_name, id
         ];
         const result = await client.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });

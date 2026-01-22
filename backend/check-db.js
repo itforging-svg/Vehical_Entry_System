@@ -17,9 +17,10 @@ async function check() {
             FROM information_schema.columns 
             WHERE table_name = 'entry_logs'
         `);
-        console.log("COLUMNS_JSON_START");
-        console.log(JSON.stringify(res.rows, null, 2));
-        console.log("COLUMNS_JSON_END");
+        const columns = res.rows.map(r => r.column_name).sort();
+        console.log("COLUMNS_LIST_START");
+        console.log(columns.join(', '));
+        console.log("COLUMNS_LIST_END");
     } catch (err) {
         console.error(err);
     } finally {
