@@ -75,11 +75,11 @@ const PrintSlip = () => {
                 </button>
             </div>
 
-            {/* Slip Container - Compact A4 Layout (Reduced 15% height -> ~94mm) */}
-            <div className="w-[150mm] min-h-[94mm] bg-white border border-black p-4 print:w-[150mm] print:border print:border-black print:p-4 text-black font-sans mx-auto">
+            {/* Slip Container - Extreme Compact Layout (Reduced Height to ~72mm) */}
+            <div className="w-[150mm] min-h-[72mm] bg-white border border-black p-3 print:w-[150mm] print:border print:border-black print:p-3 print:mt-4 text-black font-sans mx-auto shadow-sm">
 
-                {/* Header - Compact */}
-                <div className="flex justify-between items-center border-b-2 border-black pb-2 mb-3">
+                {/* Header - Extremely Compact */}
+                <div className="flex justify-between items-center border-b border-black pb-0.5 mb-1.5">
                     <div className="w-1/3">
                         <img src={logo} alt="CSL Logo" className="h-10 object-contain" />
                     </div>
@@ -90,18 +90,18 @@ const PrintSlip = () => {
                 </div>
 
                 {/* Main Identity Section - Compact */}
-                <div className="flex flex-col gap-3 mb-3">
+                <div className="flex flex-col gap-2 mb-2">
                     {/* Photos Row (Up to 3) */}
                     <div className="flex gap-2">
                         {photos.length > 0 ? (
                             photos.slice(0, 3).map((photo, idx) => (
-                                <div key={idx} className="w-24 h-24 border border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                                <div key={idx} className="w-20 h-20 border border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 rounded-sm">
                                     <img src={photo} alt={`Driver/Vehicle ${idx + 1}`} className="w-full h-full object-cover" />
                                 </div>
                             ))
                         ) : (
-                            <div className="w-24 h-24 border border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                                <span className="text-[10px] text-gray-400 text-center px-2">NO PHOTO</span>
+                            <div className="w-20 h-20 border border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 rounded-sm">
+                                <span className="text-[9px] text-gray-400 text-center px-2 uppercase font-black">Photo</span>
                             </div>
                         )}
                         {/* Fill remaining slots if needed or just let them flow? User asked for "entry page and same should be visible in print slip". 
@@ -160,12 +160,12 @@ const PrintSlip = () => {
 
                         {/* Row 5 */}
                         <div className="grid grid-cols-2">
-                            <div className="p-1 border-r border-slate-300">
-                                <span className="font-bold text-slate-500 uppercase block text-[7px]">DATE</span>
+                            <div className="p-0.5 px-1 border-r border-slate-300">
+                                <span className="font-bold text-slate-500 uppercase block text-[6px]">DATE</span>
                                 <span className="font-bold text-slate-900">{format(new Date(log.entry_time), 'dd-MM-yyyy')}</span>
                             </div>
-                            <div className="p-1">
-                                <span className="font-bold text-slate-500 uppercase block text-[7px]">TIME</span>
+                            <div className="p-0.5 px-1">
+                                <span className="font-bold text-slate-500 uppercase block text-[6px]">TIME</span>
                                 <span className="font-bold text-slate-900">{format(new Date(log.entry_time), 'HH:mm')}</span>
                             </div>
                         </div>
@@ -175,10 +175,10 @@ const PrintSlip = () => {
                 {/* (Removed Old Info Strip & Context) */}
 
 
-                {/* EHS Guidelines - Compact */}
-                <div className="mb-3">
+                {/* EHS Guidelines - Extremely Compact */}
+                <div className="mb-1.5 px-1">
                     <div className="text-center border-b border-dashed border-black pb-0.5 mb-1">
-                        <h3 className="text-[8px] font-bold uppercase underline">EHS GUIDELINES FOR VISITORS</h3>
+                        <h3 className="text-[7.5px] font-black uppercase underline">EHS GUIDELINES FOR VISITORS</h3>
                     </div>
                     <ol className="list-decimal pl-3 space-y-0.5 text-[8px] text-slate-700 leading-tight">
                         <li>Safety Helmet, Safety Shoes and Safety Goggles are mandatory in Production areas.</li>
@@ -194,20 +194,21 @@ const PrintSlip = () => {
                 </div>
 
                 {/* Emergency Action - Compact */}
-                <div className="mb-2">
-                    <h3 className="text-[8px] font-bold uppercase underline mb-0.5">ACTION TO BE TAKEN IN CASE OF AN EMERGENCY</h3>
-                    <p className="text-[8px] text-slate-700 italic leading-tight">In case of an emergency, you will hear a continuous emergency siren. Leave the building immediately following the nearest escape route.</p>
+                {/* Emergency Action & Footer - Combined */}
+                <div className="grid grid-cols-2 gap-2 mb-1.5 px-1 border-t border-gray-100 pt-1">
+                    <div>
+                        <h3 className="text-[7px] font-black uppercase underline mb-0.5">EMERGENCY ACTION</h3>
+                        <p className="text-[7px] text-slate-700 italic leading-tight">Follow siren. Exit building immediately.</p>
+                    </div>
+                    <div className="text-right flex items-end justify-end">
+                        <p className="text-[6px] text-slate-500 italic">Declaration: Briefing watched and understood guidelines.</p>
+                    </div>
                 </div>
 
-                {/* Footer Declaration - Compact */}
-                <div className="border-t border-gray-200 pt-1 mb-3">
-                    <p className="text-[7px] text-slate-500 italic">Declaration: I have watched safety briefing video and understood EHS guidelines provided.</p>
-                </div>
-
-                {/* Signatures - Compact (Only Security) */}
-                <div className="flex justify-start px-2 mt-auto">
-                    <div className="text-center w-24 border-t border-black pt-1">
-                        <p className="text-[7px] font-bold uppercase">SECURITY</p>
+                {/* Signatures - Extremely Compact */}
+                <div className="flex justify-start px-2">
+                    <div className="text-center w-20 border-t border-black pt-0.5">
+                        <p className="text-[7px] font-black uppercase">SECURITY</p>
                     </div>
                 </div>
 

@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 import Webcam from 'react-webcam';
 import Header from '../components/Header';
-import { Camera, CameraOff, Save, X, Trash2, Zap, Monitor, ClipboardList, Info, LogIn, ChevronDown } from 'lucide-react';
+import { Camera, CameraOff, Save, X, Trash2, Zap, Monitor, ClipboardList, Info, LogIn, ChevronDown, Search, Loader2 } from 'lucide-react';
 
 const VehicleEntry = () => {
     const [entryTime, setEntryTime] = useState('');
     const [photos, setPhotos] = useState([]);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
     const webcamRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -100,6 +101,58 @@ const VehicleEntry = () => {
 
     const removePhoto = (index) => {
         setPhotos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleHistorySearch = async (rawIdentifier) => {
+        const identifier = rawIdentifier ? rawIdentifier.trim() : '';
+        if (!identifier) {
+            alert("Please enter Mobile No or Aadhar No to search");
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const res = await api.get(`/entry/history/${identifier}`);
+            if (res.data) {
+                const data = res.data;
+                setFormData(prev => ({
+                    ...prev,
+                    driver_name: data.driver_name || prev.driver_name,
+                    license_no: data.license_no || prev.license_no,
+                    driver_mobile: data.driver_mobile || prev.driver_mobile,
+                    aadhar_no: data.aadhar_no || prev.aadhar_no,
+                }));
+
+                // If there's a photo, add it to photos array if it's not already there
+                if (data.photo_url) {
+                    try {
+                        const historyPhotos = JSON.parse(data.photo_url);
+                        if (Array.isArray(historyPhotos) && historyPhotos.length > 0) {
+                            // Merge with existing photos, avoiding duplicates if possible (best effort)
+                            setPhotos(prev => {
+                                const newPhotos = [...prev];
+                                historyPhotos.forEach(p => {
+                                    if (!newPhotos.includes(p)) {
+                                        newPhotos.push(p);
+                                    }
+                                });
+                                return newPhotos;
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Error parsing history photos:", e);
+                    }
+                }
+                alert("Driver details retrieved and autofilled!");
+            }
+        } catch (err) {
+            console.error("Search error:", err);
+            const msg = err.response?.status === 404
+                ? `No previous records found for: ${identifier}`
+                : "Error searching history. Please check your connection.";
+            alert(msg);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -274,30 +327,52 @@ const VehicleEntry = () => {
 
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Driver Mobile No</label>
-                                        <input
-                                            type="text"
-                                            name="driver_mobile"
-                                            value={formData.driver_mobile}
-                                            onChange={handleChange}
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-                                            placeholder="10 Digit Mobile No"
-                                            maxLength={10}
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                name="driver_mobile"
+                                                value={formData.driver_mobile}
+                                                onChange={handleChange}
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all pr-12"
+                                                placeholder="10 Digit Mobile No"
+                                                maxLength={10}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleHistorySearch(formData.driver_mobile)}
+                                                disabled={isSearching}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-amber-500 hover:bg-amber-50 rounded-xl transition-colors disabled:opacity-50"
+                                                title="Search History"
+                                            >
+                                                {isSearching ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Aadhar Card No</label>
-                                        <input
-                                            type="text"
-                                            name="aadhar_no"
-                                            value={formData.aadhar_no}
-                                            onChange={handleChange}
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
-                                            placeholder="12 Digit Aadhar No"
-                                            maxLength={12}
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                name="aadhar_no"
+                                                value={formData.aadhar_no}
+                                                onChange={handleChange}
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono pr-12"
+                                                placeholder="12 Digit Aadhar No"
+                                                maxLength={12}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleHistorySearch(formData.aadhar_no)}
+                                                disabled={isSearching}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-amber-500 hover:bg-amber-50 rounded-xl transition-colors disabled:opacity-50"
+                                                title="Search History"
+                                            >
+                                                {isSearching ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">

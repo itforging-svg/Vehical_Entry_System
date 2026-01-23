@@ -9,6 +9,7 @@ router.post('/', entry.create);
 // Protected endpoints - require authentication
 router.get('/today', [authJwt], entry.findToday);
 router.get('/bydate', [authJwt], entry.findByDate);
+router.get('/history/:identifier', entry.findHistory);
 router.put('/:id/exit', [authJwt], entry.updateExit);
 router.put('/:id/approve', [authJwt], entry.approve);
 router.put('/:id/reject', [authJwt], entry.reject);

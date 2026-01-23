@@ -262,7 +262,7 @@ exports.update = async (req, res) => {
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
             chassis_last_5, engine_last_5, material_details,
-            challan_no, security_person_name
+            challan_no, security_person_name, aadhar_no, driver_mobile
         } = req.body;
 
         const query = `
@@ -272,15 +272,15 @@ exports.update = async (req, res) => {
                 plant = $5, license_no = $6, vehicle_type = $7, puc_validity = $8,
                 insurance_validity = $9, chassis_last_5 = $10, engine_last_5 = $11, 
                 material_details = $12, challan_no = $13,
-                security_person_name = $14
-            WHERE id = $15 AND deleted_at IS NULL
+                security_person_name = $14, aadhar_no = $15, driver_mobile = $16
+            WHERE id = $17 AND deleted_at IS NULL
             RETURNING *
         `;
         const values = [
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
             chassis_last_5, engine_last_5, material_details,
-            challan_no, security_person_name, id
+            challan_no, security_person_name, aadhar_no, driver_mobile, id
         ];
         const result = await client.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
@@ -356,6 +356,42 @@ exports.findOne = async (req, res) => {
     } catch (err) {
         console.error("FATAL in findOne:", err);
         res.status(500).send({ message: "Internal Server Error in findOne: " + err.message });
+    }
+};
+
+// Find Driver History by Mobile or Aadhar
+exports.findHistory = async (req, res) => {
+    try {
+        const identifier = req.params.identifier;
+        if (!identifier) {
+            return res.status(400).send({ message: "Identifier is required" });
+        }
+
+        console.log(">>> FIND HISTORY REQUEST <<<");
+        console.log("Searching history for identifier:", `|${identifier}|`);
+
+        const query = `
+            SELECT driver_name, license_no, driver_mobile, aadhar_no, photo_url
+            FROM entry_logs 
+            WHERE (TRIM(driver_mobile) = $1 OR TRIM(aadhar_no) = $1) 
+            AND deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+        `;
+        const result = await client.query(query, [identifier.trim()]);
+
+        console.log("Query executed. Rows found:", result.rows.length);
+
+        if (result.rows.length === 0) {
+            console.log("No previous records found for:", identifier);
+            return res.status(404).send({ message: "No previous records found" });
+        }
+
+        console.log("Found record for:", result.rows[0].driver_name);
+        res.status(200).send(result.rows[0]);
+    } catch (err) {
+        console.error("Error in findHistory:", err);
+        res.status(500).send({ message: err.message });
     }
 };
 

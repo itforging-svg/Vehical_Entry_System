@@ -414,7 +414,7 @@ const Dashboard = () => {
                                             <td className="p-4 pr-8">
                                                 <div className="flex justify-center gap-2">
                                                     <div className="flex justify-center gap-2">
-                                                        {(isSuperAdmin || log.approval_status === 'Pending') && (
+                                                        {(isSuperAdmin || log.approval_status === 'Pending') && log.status !== 'Out' && log.approval_status !== 'Rejected' && (
                                                             <button
                                                                 className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
                                                                 onClick={() => handleAction(log.id, 'approve')}
@@ -423,7 +423,7 @@ const Dashboard = () => {
                                                                 <CheckCircle size={16} />
                                                             </button>
                                                         )}
-                                                        {log.status !== 'Out' && log.approval_status !== 'Rejected' && (
+                                                        {log.status !== 'Out' && log.approval_status === 'Pending' && (
                                                             <button
                                                                 className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
                                                                 onClick={() => {
@@ -658,12 +658,30 @@ const Dashboard = () => {
                                             onChange={e => setEditData({ ...editData, driver_name: e.target.value })}
                                         />
                                     </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Mobile No</label>
+                                            <input
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono"
+                                                value={editData.driver_mobile || ''}
+                                                onChange={e => setEditData({ ...editData, driver_mobile: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Licence Number</label>
+                                            <input
+                                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                                value={editData.license_no || ''}
+                                                onChange={e => setEditData({ ...editData, license_no: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Licence Number</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Aadhar Card No</label>
                                         <input
-                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-                                            value={editData.license_no || ''}
-                                            onChange={e => setEditData({ ...editData, license_no: e.target.value })}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono tracking-wide"
+                                            value={editData.aadhar_no || ''}
+                                            onChange={e => setEditData({ ...editData, aadhar_no: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -719,12 +737,28 @@ const Dashboard = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="space-y-2 md:col-span-2">
+                                    <div className="space-y-2 md:col-span-1">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Transporter / Party Name</label>
                                         <input
                                             className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                                             value={editData.transporter || ''}
                                             onChange={e => setEditData({ ...editData, transporter: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Challan / Invoice No</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all uppercase"
+                                            value={editData.challan_no || ''}
+                                            onChange={e => setEditData({ ...editData, challan_no: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Security Person Name</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            value={editData.security_person_name || ''}
+                                            onChange={e => setEditData({ ...editData, security_person_name: e.target.value })}
                                         />
                                     </div>
                                 </div>
