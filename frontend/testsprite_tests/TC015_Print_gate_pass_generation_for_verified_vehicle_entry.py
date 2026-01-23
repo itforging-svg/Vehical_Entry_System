@@ -47,11 +47,10 @@ async def run_test():
         
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
-        frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Gate Pass Successfully Generated for Vehicle XYZ123').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Gate Pass Successfully Generated').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: The print-optimized gate pass did not generate correctly or is missing relevant vehicle and driver details as per the test plan.")
+            raise AssertionError('Test case failed: The print-optimized gate pass could not be generated correctly from the entry logs. Vehicle and driver details, token ID, or timestamps might be missing or improperly formatted.')
         await asyncio.sleep(5)
     
     finally:

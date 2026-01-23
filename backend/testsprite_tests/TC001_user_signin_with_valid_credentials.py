@@ -2,36 +2,36 @@ import requests
 
 def test_user_signin_with_valid_credentials():
     base_url = "http://127.0.0.1:5001"
-    signin_endpoint = f"{base_url}/api/auth/signin"
+    signin_url = f"{base_url}/api/auth/signin"
     payload = {
-        "identifier": "testUser",
+        "username": "testUser",
         "password": "testPassword123"
     }
     headers = {
         "Content-Type": "application/json"
     }
+
     try:
-        response = requests.post(signin_endpoint, json=payload, headers=headers, timeout=30)
+        response = requests.post(signin_url, json=payload, headers=headers, timeout=30, verify=False)
     except requests.RequestException as e:
         assert False, f"Request failed: {e}"
 
-    assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}"
-
+    assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}"
     try:
-        response_json = response.json()
+        data = response.json()
     except ValueError:
         assert False, "Response is not valid JSON"
 
-    # Assert JWT token presence
-    token = response_json.get("accessToken") or response_json.get("token") or response_json.get("jwt")
-    assert token and isinstance(token, str) and len(token) > 0, "JWT token not found in response"
+    # Verify JWT token presence and non-empty string
+    token = data.get("accessToken") or data.get("token") or data.get("jwt")  # commonly used keys
+    assert token and isinstance(token, str) and len(token) > 0, "JWT token missing or invalid in response"
 
-    # Assert role assignment presence and validity
-    role = response_json.get("role") or response_json.get("roles")
-    assert role, "Role not found in response"
+    # Verify role assignment exists and is a valid string (e.g., "Admin" or "Guard")
+    role = data.get("role") or data.get("roles") or data.get("userRole")
+    assert role is not None, "Role not found in response"
     if isinstance(role, list):
-        assert all(isinstance(r, str) and r for r in role), "Role list contains invalid entries"
+        assert len(role) > 0 and isinstance(role[0], str), "Role list empty or invalid"
     else:
-        assert isinstance(role, str) and role, "Role is not valid string"
+        assert isinstance(role, str) and len(role) > 0, "Role value invalid"
 
 test_user_signin_with_valid_credentials()

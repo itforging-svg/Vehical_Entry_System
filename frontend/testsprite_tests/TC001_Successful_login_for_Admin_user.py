@@ -48,9 +48,9 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
         try:
-            await expect(page.locator('text=Admin Access Granted').first).to_be_visible(timeout=1000)
+            await expect(page.locator('text=Admin Access Granted').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError("Test case failed: Admin user login unsuccessful or Admin privileges not granted as per the test plan.")
+            raise AssertionError('Test case failed: Admin user login was unsuccessful or Admin privileges were not granted as expected.')
         await asyncio.sleep(5)
     
     finally:

@@ -48,9 +48,9 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
         try:
-            await expect(page.locator('text=Vehicle entry form submitted successfully').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Vehicle entry successful').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError('Test failed: Vehicle entry form submission should be blocked when mandatory fields are missing, but the form was submitted successfully.')
+            raise AssertionError('Test case failed: The vehicle entry form did not enforce mandatory fields or display appropriate error messages when required fields were missing, allowing form submission to proceed.')
         await asyncio.sleep(5)
     
     finally:

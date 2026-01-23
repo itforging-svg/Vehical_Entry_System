@@ -8,10 +8,10 @@
     "projectName": "backend",
     "projectPath": "c:\\Users\\it.forging\\Documents\\Vehical_Entry\\Vehical_Entry_System\\backend",
     "testIds": [],
-    "additionalInstruction": "Ignore HTTPS issues. The backend is on http://localhost:5001. \nTest User: identifier=\"testUser\", password=\"testPassword123\".\nThe backend has been updated to support both 'identifier' and 'username' in the login payload. \nRun all backend tests (TC001-TC010).",
+    "additionalInstruction": "Ignore HTTPS issues. The backend is on http://localhost:5001. \nTest User: identifier=\"testUser\", password=\"testPassword123\".\nVerify that TC001-TC010 now pass with the recent fixes for timestamp, duration, and history retrieval.",
     "envs": {
       "API_KEY": "sk-user-g3Nlc2nIQQMTTQqdowtsnWzFamfL-7xdJnHjogYAhh3vA8_OPYdKccviljFNsAOSUIn-9rpp2yGoqLkFDjtwtvWdKZ1xAAvkJzExrOoLUVw3OR8wO0w2XVudoRCyuDMBNlc"
     }
   },
-  "proxy": "http://9ec94d4d-2747-4e0f-a32e-eceb52e27ad7:7TMjVfw79iJUblBtewMjAwETYPU7Gu9T@tun.testsprite.com:8080"
+  "proxy": "http://b2de2452-52de-4b99-ae83-ac9a9f9eca61:ZGd84aadZTBaEv5Y9LUQUnEA9ieHwIMN@tun.testsprite.com:8080"
 }

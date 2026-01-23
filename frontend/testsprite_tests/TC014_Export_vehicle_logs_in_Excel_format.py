@@ -47,11 +47,10 @@ async def run_test():
         
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
-        frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Export Successful: Vehicle Logs Excel File Generated').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Export Successful! Data Verified').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError('Test case failed: Admin was unable to export filtered vehicle entry and exit logs in Excel format successfully. The Excel file did not download or did not contain the correct and complete vehicle log data as required by the test plan.')
+            raise AssertionError('Test failed: Admin export of filtered vehicle entry and exit logs in Excel did not complete successfully or the file content is incorrect.')
         await asyncio.sleep(5)
     
     finally:

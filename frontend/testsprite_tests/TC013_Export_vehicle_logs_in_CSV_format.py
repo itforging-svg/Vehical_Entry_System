@@ -49,9 +49,9 @@ async def run_test():
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Export Successful! Vehicle Logs Downloaded').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Export Successful: Vehicle Logs CSV Generated').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError("Test failed: The Admin was unable to export filtered vehicle entry and exit logs in CSV format successfully. The CSV export did not complete as expected or the required vehicle log data was missing.")
+            raise AssertionError("Test failed: The Admin was unable to export filtered vehicle entry and exit logs in CSV format successfully. The CSV export did not complete as expected or the required vehicle log data is missing.")
         await asyncio.sleep(5)
     
     finally:

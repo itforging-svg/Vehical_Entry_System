@@ -46,11 +46,75 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Look for any navigation or clickable elements to reach the login page or reveal the login form.
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Try to navigate to a login page or find a login link/button by checking for any navigation elements or try direct URL navigation if no clickable elements exist.
+        await page.goto('http://localhost:5174/login', timeout=10000)
+        await asyncio.sleep(3)
+        
+
+        # -> Input invalid username and password and click the login button.
+        frame = context.pages[-1]
+        # Input invalid username
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('invalidUser')
+        
+
+        frame = context.pages[-1]
+        # Input invalid password
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('wrongPassword')
+        
+
+        frame = context.pages[-1]
+        # Click the login button to attempt login with invalid credentials
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Test login with valid username 'testUser' and invalid password to verify error handling.
+        frame = context.pages[-1]
+        # Input valid username 'testUser'
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testUser')
+        
+
+        frame = context.pages[-1]
+        # Input invalid password
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('wrongPassword')
+        
+
+        frame = context.pages[-1]
+        # Click login button to attempt login with valid username and invalid password
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Test login with valid username 'testUser' and valid password 'testPassword123' to verify successful login.
+        frame = context.pages[-1]
+        # Input valid username 'testUser'
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testUser')
+        
+
+        frame = context.pages[-1]
+        # Input valid password 'testPassword123'
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testPassword123')
+        
+
+        frame = context.pages[-1]
+        # Click login button to attempt login with valid username and valid password
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
         # --> Assertions to verify final state
-        try:
-            await expect(page.locator('text=Login Successful').first).to_be_visible(timeout=30000)
-        except AssertionError:
-            raise AssertionError('Test case failed: The system did not reject login attempts with invalid credentials as expected. Login should fail with an appropriate error message.')
+        frame = context.pages[-1]
+        await expect(frame.locator('text=WAITING ENTRY Rejected').first).to_be_visible(timeout=30000)
         await asyncio.sleep(5)
     
     finally:

@@ -46,11 +46,64 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Find and interact with login elements to log in as Security Guard.
+        await page.mouse.wheel(0, 300)
+        
+
+        # -> Investigate alternative ways to access login or vehicle exit processing page, such as URL navigation or checking for hidden elements.
+        await page.goto('http://localhost:5174/login', timeout=10000)
+        await asyncio.sleep(3)
+        
+
+        # -> Input testUser credentials and click INITIALIZE SESSION to log in.
+        frame = context.pages[-1]
+        # Input username as testUser
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testUser')
+        
+
+        frame = context.pages[-1]
+        # Input password as testPassword123
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testPassword123')
+        
+
+        frame = context.pages[-1]
+        # Click INITIALIZE SESSION button to log in
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Locate and click the 'Register Exit' button for a vehicle currently inside to proceed with exit processing.
+        await page.mouse.wheel(0, 300)
+        
+
+        frame = context.pages[-1]
+        # Click 'Register Exit' button for a vehicle currently inside to start exit processing
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr[8]/td/div/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'Register Exit' button (index 41) for the vehicle with license plate TEST1234 and status 'INSIDE' and 'APPROVED' to confirm exit.
+        frame = context.pages[-1]
+        # Click 'Register Exit' button for vehicle TEST1234 with status INSIDE and APPROVED to confirm exit
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr[7]/td[6]/div/div/button[5]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'Register Exit' button with index 41 for vehicle TEST1234 to confirm exit.
+        frame = context.pages[-1]
+        # Click 'Register Exit' button for vehicle TEST1234 with status 'INSIDE' and 'APPROVED' to confirm exit
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr[7]/td[6]/div/div/button[5]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
         # --> Assertions to verify final state
+        frame = context.pages[-1]
         try:
-            await expect(page.locator('text=Vehicle Exit Process Completed Successfully').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Vehicle Exit Successful').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError('Test case failed: The exit process did not complete as expected. Vehicle details, exit timestamp, or dashboard update verification failed as per the test plan.')
+            raise AssertionError("Test case failed: The exit process did not complete successfully. Vehicle details, exit timestamp, or dashboard update verification failed as per the test plan.")
         await asyncio.sleep(5)
     
     finally:

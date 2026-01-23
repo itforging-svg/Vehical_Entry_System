@@ -47,10 +47,11 @@ async def run_test():
         
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
+        frame = context.pages[-1]
         try:
-            await expect(page.locator('text=Vehicle Registration Successful - Token ID 999999').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=All vehicle entries processed successfully with unique tokens and accurate timestamps').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError('Test failed: System stability and data consistency validation failed during high volume vehicle entry and exit simulation. Expected unique token ID and successful registration message not found.')
+            raise AssertionError('Test failed: System stability and data consistency validation failed during high volume vehicle entry and exit simulation. Expected confirmation message not found, indicating possible data loss, concurrency errors, or incorrect timestamp/token handling.')
         await asyncio.sleep(5)
     
     finally:

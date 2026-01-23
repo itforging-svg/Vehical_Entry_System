@@ -46,12 +46,93 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Look for any navigation or login elements to access the vehicle entry form page
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Try to navigate to a login or main menu page to access the vehicle entry form
+        await page.goto('http://localhost:5174/login', timeout=10000)
+        await asyncio.sleep(3)
+        
+
+        # -> Input test user credentials and submit login form
+        frame = context.pages[-1]
+        # Input the test user ID
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testUser')
+        
+
+        frame = context.pages[-1]
+        # Input the test user password
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testPassword123')
+        
+
+        frame = context.pages[-1]
+        # Click the INITIALIZE SESSION button to login
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Locate and click the button or link that opens the vehicle entry registration form
+        frame = context.pages[-1]
+        # Click the 'Blacklist' button to check if it leads to vehicle entry form or related options
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Look for a button or link to open the vehicle entry registration form, possibly labeled 'New Entry', 'Add Vehicle', or similar
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Look for a button or link to open the vehicle entry registration form, possibly labeled 'New Entry', 'Add Vehicle', or similar
+        await page.mouse.wheel(0, -await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Look for a button or link to open the vehicle entry registration form, possibly labeled 'New Entry', 'Add Vehicle', or similar
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        frame = context.pages[-1]
+        # Click the '+' button to open the vehicle entry registration form
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr[9]/td[6]/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Look for a button or link labeled 'New Entry', 'Add Vehicle', 'Register Vehicle', or similar to open the vehicle entry registration form
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Look for any other buttons or links that might open the vehicle entry registration form, such as 'New Entry', 'Add Vehicle', or 'Register Vehicle'
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        frame = context.pages[-1]
+        # Click the '+' button again to confirm if it opens the vehicle entry registration form or edit form
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr[9]/td/div/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Search for any navigation menu, sidebar, or header links that might lead to the vehicle entry registration form. If none found, try to open the vehicle entry form by URL or other means.
+        await page.mouse.wheel(0, -await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Look for a button or link to open the vehicle entry registration form, possibly in the header, sidebar, or dashboard controls
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        frame = context.pages[-1]
+        # Click the vehicle icon in the header to check if it leads to vehicle entry form or main menu
+        elem = frame.locator('xpath=html/body/div/div/div/main/div[3]/div[2]/table/tbody/tr/td[6]/div/div/button[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Vehicle Entry Registration Successful').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Vehicle Entry Form Submission Successful').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: The vehicle entry registration form UI did not function as expected. The form may not have submitted successfully or the confirmation message was not displayed, indicating failure in form submission or UI responsiveness on mobile/tablet devices.")
+            raise AssertionError('Test case failed: The vehicle entry registration form UI did not function as expected, including layout adaptation, usability on mobile/tablet, and successful form submission.')
         await asyncio.sleep(5)
     
     finally:

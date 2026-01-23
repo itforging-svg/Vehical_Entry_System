@@ -41,7 +41,9 @@ exports.add = async (req, res) => {
         res.status(201).send(result.rows[0]);
     } catch (err) {
         if (err.code === '23505') { // Unique violation
-            return res.status(400).send({ message: "Vehicle is already blacklisted." });
+            console.log("Blacklist: entry already exists for", req.body.vehicle_no);
+            const check = await client.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [req.body.vehicle_no.toUpperCase()]);
+            return res.status(200).send(check.rows[0]);
         }
         console.error("Blacklist add error:", err);
         res.status(500).send({ message: err.message });

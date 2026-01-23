@@ -46,12 +46,16 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Try to find or reveal login or navigation elements to proceed with login as Security Guard.
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Vehicle Entry Successfully Registered with Token XYZ123').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Vehicle Entry Successfully Registered').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError("Test case failed: Vehicle entry form did not register a new vehicle entry with a unique token and timestamp as expected.")
+            raise AssertionError('Test case failed: Vehicle entry form did not register a new vehicle entry with a unique token and timestamp as expected.')
         await asyncio.sleep(5)
     
     finally:

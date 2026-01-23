@@ -47,11 +47,10 @@ async def run_test():
         
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
-        frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Vehicle Token ID Not Found').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Vehicle Token ID 999999 Not Found').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: Exit processing did not allow searching vehicles by their unique token ID or failed to properly log the exit as required by the test plan.")
+            raise AssertionError('Test failed: Exit processing did not allow searching vehicles by their unique token ID or failed to properly log the exit as per the test plan.')
         await asyncio.sleep(5)
     
     finally:

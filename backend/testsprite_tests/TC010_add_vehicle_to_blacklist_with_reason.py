@@ -1,76 +1,51 @@
 import requests
 
 BASE_URL = "http://127.0.0.1:5001"
-TIMEOUT = 30
+AUTH_URL = f"{BASE_URL}/api/auth/signin"
+BLACKLIST_URL = f"{BASE_URL}/api/blacklist"
+
+TEST_USER = {
+    "username": "testUser",
+    "password": "testPassword123"
+}
 
 def test_add_vehicle_to_blacklist_with_reason():
+    timeout = 30
     session = requests.Session()
     try:
-        # Authenticate user to get JWT token
-        auth_payload = {
-            "identifier": "testUser",
-            "password": "testPassword123"
-        }
-        auth_resp = session.post(
-            f"{BASE_URL}/api/auth/signin",
-            json=auth_payload,
-            timeout=TIMEOUT
-        )
+        # Authenticate and get JWT token
+        auth_resp = session.post(AUTH_URL, json=TEST_USER, timeout=timeout, verify=False)
         assert auth_resp.status_code == 200, f"Authentication failed: {auth_resp.text}"
-        auth_data = auth_resp.json()
-        token = auth_data.get("accessToken") or auth_data.get("token") or auth_data.get("jwt") or auth_data.get("access_token")
-        assert token, "No JWT token found in authentication response"
+        token = auth_resp.json().get("accessToken") or auth_resp.json().get("token")
+        assert token, "JWT token not found in auth response"
 
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
-        # Add vehicle to blacklist with reason
-        blacklist_payload = {
-            "vehicle_no": "TEST-1234",
-            "reason": "Suspicious activity detected"
+        # Prepare blacklist entry data
+        vehicle_no = "TEST-1234"
+        reason = "Suspicious activity detected"
+
+        payload = {
+            "vehicle_no": vehicle_no,
+            "reason": reason
         }
-        resp = session.post(
-            f"{BASE_URL}/api/blacklist",
-            json=blacklist_payload,
-            headers=headers,
-            timeout=TIMEOUT
-        )
-        assert resp.status_code == 201, f"Failed to add vehicle to blacklist: {resp.text}"
 
-        # Verify the returned data (if any)
-        try:
-            resp_data = resp.json()
-            # If response contains added data, verify fields
-            if isinstance(resp_data, dict):
-                assert resp_data.get("vehicle_no") == "TEST-1234", "Returned vehicle_no mismatch"
-                assert resp_data.get("reason") == "Suspicious activity detected", "Returned reason mismatch"
-        except ValueError:
-            # No JSON response, skip validation
-            pass
-
+        # Add vehicle to blacklist
+        post_resp = session.post(BLACKLIST_URL, json=payload, headers=headers, timeout=timeout, verify=False)
+        assert post_resp.status_code == 201, f"Failed to add vehicle to blacklist: {post_resp.text}"
+        resp_data = post_resp.json()
+        # Validate response data contains the added vehicle_no and reason (if returned)
+        if isinstance(resp_data, dict):
+            # Maybe the API returns the created record details
+            assert resp_data.get("vehicle_no") == vehicle_no or resp_data.get("vehicleNo") == vehicle_no, "Vehicle number in response does not match"
+            assert reason in (resp_data.get("reason") or ""), "Reason in response does not match"
     finally:
-        # Cleanup: remove the blacklisted vehicle created in test
-        # Try to get blacklist entries to find the new record
-        try:
-            list_resp = session.get(
-                f"{BASE_URL}/api/blacklist",
-                headers=headers,
-                timeout=TIMEOUT
-            )
-            if list_resp.status_code == 200:
-                blacklisted = list_resp.json()
-                if isinstance(blacklisted, list):
-                    for entry in blacklisted:
-                        if entry.get("vehicle_no") == "TEST-1234":
-                            # Assuming there is a DELETE endpoint or alternative to remove blacklist entry
-                            # As deletion is not documented, skip removal if unavailable
-                            # If DELETE exists, example:
-                            # del_resp = session.delete(f"{BASE_URL}/api/blacklist/{entry['id']}", headers=headers, timeout=TIMEOUT)
-                            # assert del_resp.status_code in (200,204)
-                            pass
-        except Exception:
-            pass
+        # Clean up: attempt to remove the added blacklist entry to maintain test isolation
+        # Assuming there is a DELETE method, but none specified in PRD
+        # If no delete endpoint, then skip cleanup
+        pass
 
 test_add_vehicle_to_blacklist_with_reason()

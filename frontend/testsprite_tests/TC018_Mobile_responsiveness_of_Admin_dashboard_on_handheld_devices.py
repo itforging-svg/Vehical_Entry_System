@@ -49,9 +49,9 @@ async def run_test():
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Admin Dashboard Fully Responsive on Mobile and Tablet Devices').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Admin Dashboard Fully Responsive on Mobile and Tablet').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError('Test case failed: The Admin dashboard UI is not fully responsive or usable on mobile and tablet devices as required by the test plan.')
+            raise AssertionError("Test case failed: The Admin dashboard UI is not fully responsive or usable on mobile and tablet devices as required by the test plan. Layout issues or inaccessible buttons and logs detected.")
         await asyncio.sleep(5)
     
     finally:

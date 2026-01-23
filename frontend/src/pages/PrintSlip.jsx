@@ -159,7 +159,7 @@ const PrintSlip = () => {
                         </div>
 
                         {/* Row 5 */}
-                        <div className="grid grid-cols-2">
+                        <div className="grid grid-cols-2 border-b border-slate-300">
                             <div className="p-0.5 px-1 border-r border-slate-300">
                                 <span className="font-bold text-slate-500 uppercase block text-[6px]">DATE</span>
                                 <span className="font-bold text-slate-900">{format(new Date(log.entry_time), 'dd-MM-yyyy')}</span>
@@ -167,6 +167,18 @@ const PrintSlip = () => {
                             <div className="p-0.5 px-1">
                                 <span className="font-bold text-slate-500 uppercase block text-[6px]">TIME</span>
                                 <span className="font-bold text-slate-900">{format(new Date(log.entry_time), 'HH:mm')}</span>
+                            </div>
+                        </div>
+
+                        {/* Row 6 - New: Purpose & Material */}
+                        <div className="grid grid-cols-2">
+                            <div className="p-1 border-r border-slate-300">
+                                <span className="font-bold text-slate-500 uppercase block text-[7px]">PURPOSE</span>
+                                <span className="font-bold text-slate-900 uppercase">{log.purpose}</span>
+                            </div>
+                            <div className="p-1">
+                                <span className="font-bold text-slate-500 uppercase block text-[7px]">MATERIAL LOAD</span>
+                                <span className="font-bold text-slate-900 uppercase">{log.material_details || 'N/A'}</span>
                             </div>
                         </div>
                     </div>

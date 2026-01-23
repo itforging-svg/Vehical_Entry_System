@@ -14,49 +14,35 @@
 
 #### Test TC001 user signin with valid credentials
 - **Test Code:** [TC001_user_signin_with_valid_credentials.py](./TC001_user_signin_with_valid_credentials.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/fbc6715e-1f3b-4b24-b4b9-e15afa7c71f2
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/a6bcb1fe-9071-465a-9e61-e0dcae8a1008
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC002 create vehicle entry log with complete details
 - **Test Code:** [TC002_create_vehicle_entry_log_with_complete_details.py](./TC002_create_vehicle_entry_log_with_complete_details.py)
-- **Test Error:** Traceback (most recent call last):
-  File "/var/task/handler.py", line 258, in run_with_retry
-    exec(code, exec_env)
-  File "<string>", line 98, in <module>
-  File "<string>", line 80, in test_create_vehicle_entry_log_with_complete_details
-AssertionError: Entry timestamp not found in response
-
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/1ee0a04e-b7f0-4bce-b16b-9e340d1b2532
-- **Status:** ❌ Failed
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/760fd1a0-3991-4fff-b78e-dd5be7ac75c4
+- **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC003 register vehicle exit and calculate duration
 - **Test Code:** [TC003_register_vehicle_exit_and_calculate_duration.py](./TC003_register_vehicle_exit_and_calculate_duration.py)
-- **Test Error:** Traceback (most recent call last):
-  File "/var/task/handler.py", line 258, in run_with_retry
-    exec(code, exec_env)
-  File "<string>", line 123, in <module>
-  File "<string>", line 106, in test_register_vehicle_exit_and_calculate_duration
-AssertionError: Duration not found in response
-
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/859c425d-255a-4811-8db2-c9e921345935
-- **Status:** ❌ Failed
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/68279b6d-f6ba-44ad-890e-6ac7e3aa0948
+- **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC004 approve vehicle entry log
 - **Test Code:** [TC004_approve_vehicle_entry_log.py](./TC004_approve_vehicle_entry_log.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/82963920-0778-4ef6-a218-aa404052c550
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/6ed7236e-e621-48dc-9f32-66df8d9a15cf
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC005 reject vehicle entry log with reason
 - **Test Code:** [TC005_reject_vehicle_entry_log_with_reason.py](./TC005_reject_vehicle_entry_log_with_reason.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/2a8b44d7-7533-4b9a-b189-b7704146c51a
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/38aaaa38-d13e-4573-bb53-7a40d315ee61
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
@@ -66,40 +52,54 @@ AssertionError: Duration not found in response
 - **Test Error:** Traceback (most recent call last):
   File "/var/task/handler.py", line 258, in run_with_retry
     exec(code, exec_env)
-  File "<string>", line 45, in <module>
-  File "<string>", line 27, in test_retrieve_vehicle_entry_history_by_identifier
-AssertionError: History retrieval failed with status 404
+  File "<string>", line 34, in <module>
+  File "<string>", line 16, in test_retrieve_vehicle_entry_history_by_identifier
+AssertionError: Failed to get history: {"message":"No previous records found"}
 
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/493738db-2271-45a0-aea7-387da42fffd3
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/932fec32-ae32-4996-b475-bb78a84cc432
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC007 get todays vehicle entry logs
 - **Test Code:** [TC007_get_todays_vehicle_entry_logs.py](./TC007_get_todays_vehicle_entry_logs.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/9c2b5f8b-1c34-409e-8378-a9efcd9ec69d
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/0d181245-de03-4eb2-8c5f-f7210d43c2f2
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC008 get vehicle entry logs filtered by date
 - **Test Code:** [TC008_get_vehicle_entry_logs_filtered_by_date.py](./TC008_get_vehicle_entry_logs_filtered_by_date.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/94978036-8452-4609-ad0c-f04361d75d6d
-- **Status:** ✅ Passed
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 79, in <module>
+  File "<string>", line 70, in test_get_vehicle_entry_logs_filtered_by_date
+AssertionError: Log entry does not contain 'createdAt' field
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/2c93644a-8a8b-4ecc-b3bb-6d99a49a9ff5
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC009 list blacklisted vehicles
 - **Test Code:** [TC009_list_blacklisted_vehicles.py](./TC009_list_blacklisted_vehicles.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/dad6b491-e03c-4038-ab5f-6054b6fc5003
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/e9d1a9b7-a9a6-4380-b990-781d76ee5f9a
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC010 add vehicle to blacklist with reason
 - **Test Code:** [TC010_add_vehicle_to_blacklist_with_reason.py](./TC010_add_vehicle_to_blacklist_with_reason.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/e73ccca3-f758-45d6-a109-23af769eba19/226f0133-3adc-4462-8598-e968aca3e232
-- **Status:** ✅ Passed
+- **Test Error:** Traceback (most recent call last):
+  File "/var/task/handler.py", line 258, in run_with_retry
+    exec(code, exec_env)
+  File "<string>", line 51, in <module>
+  File "<string>", line 38, in test_add_vehicle_to_blacklist_with_reason
+AssertionError: Failed to add vehicle to blacklist: {"message":"Vehicle is already blacklisted."}
+
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/9af2e0f5-afcc-4d80-9737-69f766958f01/01a4e41a-b76d-474b-8f63-9d5760815077
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 

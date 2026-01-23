@@ -46,11 +46,56 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Select 'Vehicle Entry System' portal and click 'PROCEED TO ACCESS' to go to login page
+        frame = context.pages[-1]
+        # Select 'Vehicle Entry System' portal
+        elem = frame.locator('xpath=html/body/div/div/div/main/div/div[2]/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        # Click 'PROCEED TO ACCESS' button to proceed to login
+        elem = frame.locator('xpath=html/body/div/div/div/main/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'Admin Login' button to proceed to the Admin login page
+        frame = context.pages[-1]
+        # Click 'Admin Login' button
+        elem = frame.locator('xpath=html/body/div/div/div/header/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Retry clicking 'Admin Login' button or scroll to it to ensure visibility
+        frame = context.pages[-1]
+        # Retry clicking 'Admin Login' button
+        elem = frame.locator('xpath=html/body/div/div/div/header/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Input username 'testUser' and password 'testPassword123', then click 'INITIALIZE SESSION' to log in as Admin
+        frame = context.pages[-1]
+        # Input username 'testUser'
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testUser')
+        
+
+        frame = context.pages[-1]
+        # Input password 'testPassword123'
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('testPassword123')
+        
+
+        frame = context.pages[-1]
+        # Click 'INITIALIZE SESSION' button to log in
+        elem = frame.locator('xpath=html/body/div/div/div/div[2]/div/form/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
         # --> Assertions to verify final state
-        try:
-            await expect(page.locator('text=Admin dashboard loaded successfully').first).to_be_visible(timeout=2000)
-        except AssertionError:
-            raise AssertionError('Test failed: Admin dashboard did not load within 2 seconds or real-time vehicle count is inaccurate as per the test plan.')
+        frame = context.pages[-1]
+        await expect(frame.locator('text=CHANDAN STEEL LTD').first).to_be_visible(timeout=2000)
+        await expect(frame.locator('text=INSIDE').first).to_be_visible(timeout=30000)
         await asyncio.sleep(5)
     
     finally:

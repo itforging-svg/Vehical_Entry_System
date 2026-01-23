@@ -394,6 +394,11 @@ const Dashboard = () => {
                                                             <div className="font-mono text-xs font-medium text-slate-400">{formatTime(log.exit_time)}</div>
                                                         </div>
                                                     )}
+                                                    {log.duration && (
+                                                        <div className="text-[10px] font-black text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 mt-1 flex items-center gap-1 w-fit">
+                                                            <Clock size={10} /> {log.duration}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-4">

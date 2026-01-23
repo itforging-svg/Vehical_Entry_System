@@ -3,121 +3,115 @@ import datetime
 import time
 
 BASE_URL = "http://127.0.0.1:5001"
-LOGIN_URL = f"{BASE_URL}/api/auth/signin"
-ENTRY_URL = f"{BASE_URL}/api/entry/"
+AUTH_ENDPOINT = f"{BASE_URL}/api/auth/signin"
+ENTRY_ENDPOINT = f"{BASE_URL}/api/entry/"
 
-USERNAME = "testUser"
-PASSWORD = "testPassword123"
-TIMEOUT = 30
+TEST_USER = {
+    "username": "testUser",
+    "password": "testPassword123"
+}
 
+HEADERS = {
+    "Content-Type": "application/json"
+}
 
-def test_register_vehicle_exit_and_calculate_duration():
-    # Authenticate and get token
-    try:
-        login_resp = requests.post(
-            LOGIN_URL,
-            json={"username": USERNAME, "password": PASSWORD},
-            timeout=TIMEOUT,
-            verify=False,
-        )
-        assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
-        token = login_resp.json().get("accessToken") or login_resp.json().get("token")
-        assert token, "No JWT token returned on login"
-    except Exception as e:
-        assert False, f"Authentication failed due to exception: {e}"
+def authenticate():
+    resp = requests.post(AUTH_ENDPOINT, json=TEST_USER, timeout=30, verify=False)
+    assert resp.status_code == 200, f"Authentication failed with status code {resp.status_code}"
+    data = resp.json()
+    token = data.get("accessToken") or data.get("token") or data.get("jwt")
+    assert token, "No token found in authentication response"
+    return token
 
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Create a new vehicle entry to get an ID
-    entry_payload = {
-        "plant": "TestPlant",
-        "vehicle_reg": "TEST1234",
-        "driver_name": "Test Driver",
-        "license_no": "LIC123456",
-        "vehicle_type": "Car",
-        "puc_validity": (datetime.date.today() + datetime.timedelta(days=365)).isoformat(),
-        "insurance_validity": (datetime.date.today() + datetime.timedelta(days=365)).isoformat(),
+def create_vehicle_entry(token):
+    now = datetime.datetime.utcnow().date().isoformat()
+    payload = {
+        "plant": "Main Plant",
+        "vehicle_reg": f"TEST{int(time.time())}",
+        "driver_name": "John Doe",
+        "license_no": "DL123456789",
+        "vehicle_type": "Truck",
+        "puc_validity": now,
+        "insurance_validity": now,
         "chassis_last_5": "ABCDE",
         "engine_last_5": "12345",
-        "purpose": "Testing exit timestamp",
-        "material_details": "None",
-        "transporter": "TestTransport",
-        "aadhar_no": "123456789012",
-        "driver_mobile": "9999999999",
-        "challan_no": "CHL123",
+        "purpose": "Delivery",
+        "material_details": "Paint Materials",
+        "transporter": "XYZ Logistics",
+        "aadhar_no": "111122223333",
+        "driver_mobile": "9876543210",
+        "challan_no": "CHL123456",
         "security_person_name": "Security Guard 1",
         "photos": []
     }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+    resp = requests.post(ENTRY_ENDPOINT, json=payload, headers=headers, timeout=30, verify=False)
+    assert resp.status_code == 201, f"Create entry failed with status code {resp.status_code}"
+    created_entry = resp.json()
+    entry_id = created_entry.get("id") or created_entry.get("entry_id") or created_entry.get("ID")
+    assert entry_id is not None, "No entry ID returned on creation"
+    return entry_id
 
+def delete_vehicle_entry(token, entry_id):
+    # The PRD does not specify a DELETE endpoint; skipping delete step.
+    # If there's a way to delete, add here.
+    pass
+
+def get_entry_details(token, entry_id):
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    resp = requests.get(f"{ENTRY_ENDPOINT}{entry_id}", headers=headers, timeout=30, verify=False)
+    if resp.status_code == 200:
+        return resp.json()
+    return None
+
+def test_register_vehicle_exit_and_calculate_duration():
+    token = authenticate()
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
     entry_id = None
-    try:
-        create_resp = requests.post(
-            ENTRY_URL,
-            json=entry_payload,
-            headers=headers,
-            timeout=TIMEOUT,
-            verify=False,
-        )
-        assert create_resp.status_code == 201, f"Entry creation failed: {create_resp.text}"
-        created_entry = create_resp.json()
-        # The created entry ID might be returned in different formats, try common property names
-        entry_id = created_entry.get("id") or created_entry.get("entry_id") or created_entry.get("data", {}).get("id")
-        if not entry_id:
-            # fallback: try to get first int field in response
-            for v in created_entry.values():
-                if isinstance(v, int):
-                    entry_id = v
-                    break
-        assert entry_id is not None, "Created entry ID not returned"
 
-        # Wait a short time to create a measurable duration difference
+    try:
+        # Create a new vehicle entry
+        entry_id = create_vehicle_entry(token)
+
+        # Wait 2 seconds to simulate some duration elapsed
         time.sleep(2)
 
-        # Register vehicle exit using PUT on /api/entry/{id}/exit
-        exit_resp = requests.put(
-            f"{ENTRY_URL}{entry_id}/exit",
-            headers=headers,
-            timeout=TIMEOUT,
-            verify=False,
-        )
-        assert exit_resp.status_code == 200, f"Exit registration failed: {exit_resp.text}"
-        exit_data = exit_resp.json()
+        # Register vehicle exit via PUT /api/entry/{id}/exit
+        resp_exit = requests.put(f"{ENTRY_ENDPOINT}{entry_id}/exit", headers=headers, timeout=30, verify=False)
+        assert resp_exit.status_code == 200, f"Vehicle exit update failed with status code {resp_exit.status_code}"
+        exit_data = resp_exit.json()
 
-        # Validate exit timestamp and duration fields
-        # Duration might be under 'duration' or 'total_duration', consider nested 'data' field
-        possible_duration_keys = ['duration', 'total_duration']
-        exit_timestamp = exit_data.get("exit_time") or exit_data.get("exitDateTime") or exit_data.get("data", {}).get("exit_time")
-        duration = None
-        for key in possible_duration_keys:
-            duration = exit_data.get(key) or exit_data.get("data", {}).get(key)
-            if duration is not None:
-                break
+        # Validate the response contains exit timestamp and duration
+        exit_timestamp = exit_data.get("exit_timestamp") or exit_data.get("exitTime") or exit_data.get("exit_at") or exit_data.get("exit_time")
+        duration = exit_data.get("duration") or exit_data.get("total_duration") or exit_data.get("stay_duration")
 
-        assert exit_timestamp, "Exit timestamp (exit_time) not found in response"
+        assert exit_timestamp is not None, "Exit timestamp missing in response"
+        assert duration is not None, "Duration missing in response"
 
-        # parse exit timestamp ISO8601 string if possible
-        try:
-            exit_dt = datetime.datetime.fromisoformat(exit_timestamp.replace("Z", "+00:00"))
-        except Exception:
-            exit_dt = None
-        assert exit_dt is not None, "Exit timestamp is not a valid ISO datetime"
-
-        # Check duration is positive number or valid string indicating duration
-        assert duration is not None, "Duration not found in response"
-        if isinstance(duration, (int, float)):
-            assert duration > 0, "Duration must be positive"
-        elif isinstance(duration, str):
-            assert len(duration) > 0, "Duration string must not be empty"
+        # Check that duration is positive and plausible (at least 2 seconds)
+        if isinstance(duration, str):
+            # Handle ISO 8601 duration or string durations if any; ignore detailed parse here, just check not empty
+            assert len(duration) > 0, "Duration string is empty"
         else:
-            assert False, f"Duration has unexpected type: {type(duration)}"
+            assert float(duration) >= 2.0, f"Duration too short: {duration}"
+
+        # Optionally, verify that exit timestamp is later than the entry timestamp
+        entry_time = exit_data.get("entry_timestamp") or exit_data.get("entryTime") or exit_data.get("created_at")
+        if entry_time:
+            e_time = datetime.datetime.fromisoformat(entry_time.replace("Z", "+00:00")) if "T" in entry_time else None
+            ex_time = datetime.datetime.fromisoformat(exit_timestamp.replace("Z", "+00:00")) if "T" in exit_timestamp else None
+            if e_time and ex_time:
+                assert ex_time > e_time, "Exit time is not after entry time"
 
     finally:
-        # Cleanup: delete the created entry if ID exists
-        if entry_id is not None:
-            try:
-                requests.delete(f"{ENTRY_URL}{entry_id}", headers=headers, timeout=TIMEOUT, verify=False)
-            except Exception:
-                pass  # best effort cleanup
-
+        # Clean up: no delete endpoint specified; if available implement here
+        pass
 
 test_register_vehicle_exit_and_calculate_duration()

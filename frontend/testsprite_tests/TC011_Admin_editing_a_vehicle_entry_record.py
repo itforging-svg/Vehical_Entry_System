@@ -50,7 +50,7 @@ async def run_test():
         try:
             await expect(page.locator('text=Vehicle entry updated successfully').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError('Test failed: Admin was unable to edit the existing vehicle entry record successfully or changes did not persist as expected.')
+            raise AssertionError('Test failed: Admin was unable to edit existing vehicle entry records successfully or changes did not persist as expected.')
         await asyncio.sleep(5)
     
     finally:

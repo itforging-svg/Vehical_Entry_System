@@ -47,10 +47,11 @@ async def run_test():
         
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
+        frame = context.pages[-1]
         try:
-            await expect(page.locator('text=Vehicle entry confirmed').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=Vehicle entry confirmed').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError("Test failed: The system did not display the expected 'No active vehicle entry found' message when searching for a license plate not currently inside.")
+            raise AssertionError("Test failed: The system did not show the expected 'No active vehicle entry found' message when searching for a vehicle exit with a license plate not inside.")
         await asyncio.sleep(5)
     
     finally:

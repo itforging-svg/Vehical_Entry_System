@@ -46,12 +46,32 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Select the 'Vehicle Entry System' portal and click 'PROCEED TO ACCESS' to go to login page.
+        frame = context.pages[-1]
+        # Select 'Vehicle Entry System' portal
+        elem = frame.locator('xpath=html/body/div/div/div/main/div/div[2]/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        # Click 'PROCEED TO ACCESS' button
+        elem = frame.locator('xpath=html/body/div/div/div/main/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'PROCEED TO ACCESS' button to go to the login page.
+        frame = context.pages[-1]
+        # Click 'PROCEED TO ACCESS' button to navigate to login page
+        elem = frame.locator('xpath=html/body/div/div/div/main/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=No records found for the selected date range').first).to_be_visible(timeout=30000)
+            await expect(frame.locator('text=No records found for the selected date range').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError('Test case failed: The Admin was unable to filter historical records by the selected start and end dates, or records outside the date range were displayed.')
+            raise AssertionError('Test case failed: Admin filtering of historical records by date range did not work as expected. No matching records were displayed.')
         await asyncio.sleep(5)
     
     finally:
