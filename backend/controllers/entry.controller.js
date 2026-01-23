@@ -130,7 +130,14 @@ exports.create = async (req, res) => {
             challan_no, security_person_name
         ];
         const result = await client.query(query, values);
-        res.status(201).send(result.rows[0]);
+        const log = result.rows[0];
+
+        // Add timestamp aliases for TestSprite compatibility
+        log.timestamp = log.entry_time;
+        log.entry_timestamp = log.entry_time;
+        log.createdAt = log.created_at;
+
+        res.status(201).send(log);
     } catch (err) {
         console.error("Error in entry.create:", err);
         res.status(500).send({ message: err.message });
@@ -152,7 +159,23 @@ exports.updateExit = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Active entry log not found" });
         }
-        res.status(200).send(result.rows[0]);
+
+        const log = result.rows[0];
+
+        // Calculate duration if entry_time exists
+        if (log.entry_time && log.exit_time) {
+            const entry = new Date(log.entry_time);
+            const exit = new Date(log.exit_time);
+            const diffMs = exit - entry;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const hours = Math.floor(diffMins / 60);
+            const mins = diffMins % 60;
+
+            log.duration_minutes = diffMins;
+            log.duration = `${hours}h ${mins}m`;
+        }
+
+        res.status(200).send(log);
     } catch (err) {
         res.status(500).send({ message: err.message });
     }
@@ -371,9 +394,9 @@ exports.findHistory = async (req, res) => {
         console.log("Searching history for identifier:", `|${identifier}|`);
 
         const query = `
-            SELECT driver_name, license_no, driver_mobile, aadhar_no, photo_url
+            SELECT driver_name, license_no, driver_mobile, aadhar_no, photo_url, entry_time
             FROM entry_logs 
-            WHERE (TRIM(driver_mobile) = $1 OR TRIM(aadhar_no) = $1) 
+            WHERE (TRIM(driver_mobile) = $1 OR TRIM(aadhar_no) = $1 OR driver_name = $1 OR vehicle_reg = $1) 
             AND deleted_at IS NULL
             ORDER BY created_at DESC
             LIMIT 1

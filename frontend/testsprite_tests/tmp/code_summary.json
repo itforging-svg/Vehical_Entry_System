@@ -1,0 +1,52 @@
+{
+    "tech_stack": [
+        "React",
+        "Vite",
+        "Tailwind CSS",
+        "Axios",
+        "Lucide React",
+        "React Webcam"
+    ],
+    "features": [
+        {
+            "name": "User Login",
+            "description": "Secure login for security personnel and administrators.",
+            "files": [
+                "frontend/src/pages/Login.jsx"
+            ],
+            "api_doc": {
+                "description": "Authenticates users via /api/auth/signin and stores JWT in localStorage."
+            }
+        },
+        {
+            "name": "Vehicle Entry Registration",
+            "description": "Main gate passage form with driver details, photo capture, and history lookup.",
+            "files": [
+                "frontend/src/pages/VehicleEntry.jsx"
+            ],
+            "api_doc": {
+                "description": "Captures vehicle registration, driver details, and photos. Includes history search feature."
+            }
+        },
+        {
+            "name": "Admin Dashboard",
+            "description": "Log monitoring, approval/rejection, and record editing.",
+            "files": [
+                "frontend/src/pages/Dashboard.jsx"
+            ],
+            "api_doc": {
+                "description": "Lists logs, allows status updates (approve/reject/exit), and record modification via edit modal."
+            }
+        },
+        {
+            "name": "Print Gate Pass",
+            "description": "Optimized print view for registered vehicles.",
+            "files": [
+                "frontend/src/pages/PrintSlip.jsx"
+            ],
+            "api_doc": {
+                "description": "Generates a print-ready voucher for the vehicle gate pass."
+            }
+        }
+    ]
+}

@@ -17,11 +17,12 @@ client.connect();
 
 exports.signin = async (req, res) => {
     try {
-        const { identifier, password } = req.body;
-        console.log("Signin attempt:", identifier);
+        const { identifier, username, password } = req.body;
+        const loginId = identifier || username;
+        console.log("Signin attempt:", loginId);
 
         const query = 'SELECT * FROM vehicle_system_users WHERE username = $1';
-        const result = await client.query(query, [identifier]);
+        const result = await client.query(query, [loginId]);
 
         if (result.rows.length === 0) {
             console.log("User not found:", identifier);

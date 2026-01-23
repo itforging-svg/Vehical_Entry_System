@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "user signin with valid credentials",
+    "description": "Test the /api/auth/signin endpoint to verify that users can successfully log in with valid username and password, and receive a JWT token with correct role assignment."
+  },
+  {
+    "id": "TC002",
+    "title": "create vehicle entry log with complete details",
+    "description": "Test the /api/entry/ POST endpoint to ensure a vehicle entry log can be created with all required vehicle and driver details, and the entry timestamp is recorded accurately."
+  },
+  {
+    "id": "TC003",
+    "title": "register vehicle exit and calculate duration",
+    "description": "Test the /api/entry/{id}/exit PUT endpoint to verify that marking a vehicle exit updates the exit timestamp and correctly calculates the total duration of the vehicle's stay."
+  },
+  {
+    "id": "TC004",
+    "title": "approve vehicle entry log",
+    "description": "Test the /api/entry/{id}/approve PUT endpoint to confirm that an administrator or authorized user can approve a vehicle entry log successfully."
+  },
+  {
+    "id": "TC005",
+    "title": "reject vehicle entry log with reason",
+    "description": "Test the /api/entry/{id}/reject PUT endpoint to ensure that a vehicle entry log can be rejected with a provided reason, and the rejection is recorded properly."
+  },
+  {
+    "id": "TC006",
+    "title": "retrieve vehicle entry history by identifier",
+    "description": "Test the /api/entry/history/{identifier} GET endpoint to verify that the system returns the correct historical entry and exit logs for a given vehicle or driver identifier."
+  },
+  {
+    "id": "TC007",
+    "title": "get todays vehicle entry logs",
+    "description": "Test the /api/entry/today GET endpoint to ensure it returns the list of vehicle entry logs created on the current date, accessible only to authorized users."
+  },
+  {
+    "id": "TC008",
+    "title": "get vehicle entry logs filtered by date",
+    "description": "Test the /api/entry/bydate GET endpoint with a date query parameter to verify that the system returns vehicle entry logs filtered correctly by the specified date."
+  },
+  {
+    "id": "TC009",
+    "title": "list blacklisted vehicles",
+    "description": "Test the /api/blacklist GET endpoint to confirm that authorized users can retrieve the list of all blacklisted vehicles with their reasons."
+  },
+  {
+    "id": "TC010",
+    "title": "add vehicle to blacklist with reason",
+    "description": "Test the /api/blacklist POST endpoint to ensure that a vehicle can be added to the blacklist with a valid vehicle number and reason, and the entry is stored securely."
+  }
+]

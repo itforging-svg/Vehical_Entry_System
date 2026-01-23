@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5174",
+  "executionArgs": {
+    "projectName": "frontend",
+    "projectPath": "c:\\Users\\it.forging\\Documents\\Vehical_Entry\\Vehical_Entry_System\\frontend",
+    "testIds": [],
+    "additionalInstruction": "Ignore HTTPS issues. The frontend is on https://localhost:5174. \nTest User: identifier=\"testUser\", password=\"testPassword123\".\nUse these credentials for all tests requiring authentication.\nFocus on: Login, Vehicle Registration, and Admin Dashboard.\nIgnore 'unsafe' or 'untrusted' browser warnings.",
+    "envs": {
+      "API_KEY": "sk-user-g3Nlc2nIQQMTTQqdowtsnWzFamfL-7xdJnHjogYAhh3vA8_OPYdKccviljFNsAOSUIn-9rpp2yGoqLkFDjtwtvWdKZ1xAAvkJzExrOoLUVw3OR8wO0w2XVudoRCyuDMBNlc"
+    }
+  },
+  "proxy": "http://5b5c45b9-300a-43d6-a326-eb566e553f7f:my7qRcga4T9tuxoI4CHvpsyxNNPBCOEn@tun.testsprite.com:8080"
+}

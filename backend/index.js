@@ -31,7 +31,7 @@ if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !pro
     process.exit(1);
 }
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
     const os = require('os');
     const networkInterfaces = os.networkInterfaces();
     let networkIP = 'localhost';

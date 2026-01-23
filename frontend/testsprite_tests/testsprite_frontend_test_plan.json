@@ -1,0 +1,560 @@
+[
+  {
+    "id": "TC001",
+    "title": "Successful login for Admin user",
+    "description": "Verify that an Admin user can successfully log in with valid credentials and is granted appropriate role-based access.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid Admin username and password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check login is successful and user dashboard appears with Admin privileges"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify JWT token is stored in localStorage"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Successful login for Security Guard user",
+    "description": "Verify that a Security Guard can successfully log in with valid credentials and is granted appropriate role-based access.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid Guard username and password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check login is successful and user dashboard appears with Guard privileges"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify JWT token is stored in localStorage"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Login failure with invalid credentials",
+    "description": "Verify the system rejects login attempts with invalid or incorrect username/password combinations.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid username and/or password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login fails with appropriate error message"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Vehicle entry registration success with all required fields",
+    "description": "Verify that vehicle entry form accepts all mandatory fields and successfully registers a new vehicle entry generating a unique token and timestamp.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Security Guard"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle entry registration form"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid license plate, vehicle type, driver name, contact number, purpose, and capture driver photo"
+      },
+      {
+        "type": "action",
+        "description": "Submit the vehicle entry form"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that entry is recorded with unique token ID and accurate timestamp"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard vehicle count increments by one"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Vehicle entry form validation for missing mandatory fields",
+    "description": "Verify the vehicle entry form enforces mandatory fields and displays appropriate error messages when required fields are missing.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Security Guard"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle entry registration form"
+      },
+      {
+        "type": "action",
+        "description": "Submit form with one or more mandatory fields left blank"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify form submission is blocked and shows relevant validation error messages"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Vehicle exit search by license plate",
+    "description": "Verify that the exit process allows the guard to search for a vehicle currently inside by license plate and proceed to log exit.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Security Guard"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle exit processing page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid license plate of a vehicle currently inside"
+      },
+      {
+        "type": "action",
+        "description": "Submit search query"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify vehicle details and entry record are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the vehicle exit"
+      },
+      {
+        "type": "assertion",
+        "description": "Check exit timestamp is recorded and vehicle status updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard vehicle count decrements by one"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Vehicle exit search by token ID",
+    "description": "Verify that exit processing allows searching vehicles by their unique token ID and properly logs the exit.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Security Guard"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle exit processing page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid token ID for a vehicle inside"
+      },
+      {
+        "type": "action",
+        "description": "Submit search query"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify vehicle and entry details are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Confirm vehicle exit"
+      },
+      {
+        "type": "assertion",
+        "description": "Check exit timestamp is recorded and entry status updated"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Attempt vehicle exit search with invalid or non-existing license plate",
+    "description": "Validate that searching for vehicle exit with a license plate not inside shows an appropriate 'not found' message.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Security Guard"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle exit processing page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a license plate that is not currently inside"
+      },
+      {
+        "type": "action",
+        "description": "Submit search query"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system shows 'No active vehicle entry found' or equivalent message"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Admin dashboard load performance and real-time vehicle count",
+    "description": "Verify that the Admin dashboard loads within 2 seconds and displays real-time accurate count of currently parked vehicles.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to Admin dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that dashboard loads completely within 2 seconds"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify vehicle count matches current number of vehicles inside"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Admin ability to approve or reject vehicle entry logs",
+    "description": "Verify that Admin can approve or reject vehicle entries from the dashboard and the status updates correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Open dashboard vehicle logs"
+      },
+      {
+        "type": "action",
+        "description": "Select a pending vehicle entry record"
+      },
+      {
+        "type": "action",
+        "description": "Approve the entry"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the status updates to 'Approved'"
+      },
+      {
+        "type": "action",
+        "description": "Reject another pending entry"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the status updates to 'Rejected'"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Admin editing a vehicle entry record",
+    "description": "Validate that Admin can edit existing vehicle entry records successfully and changes persist.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to dashboard logs"
+      },
+      {
+        "type": "action",
+        "description": "Select a vehicle entry to edit"
+      },
+      {
+        "type": "action",
+        "description": "Modify editable fields such as purpose or driver contact"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the log updates and reflects edited data"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Filter historical vehicle entry and exit reports by date range",
+    "description": "Verify that the Admin can filter historical records by selecting specific start and end dates, and only matching records are shown.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to historical reports section"
+      },
+      {
+        "type": "action",
+        "description": "Select valid start date and end date"
+      },
+      {
+        "type": "action",
+        "description": "Apply filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that only records within selected date range are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Export vehicle logs in CSV format",
+    "description": "Verify that the Admin can export filtered vehicle entry and exit logs in CSV format without errors and the export contains required fields.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to historical reports"
+      },
+      {
+        "type": "action",
+        "description": "Apply date filters"
+      },
+      {
+        "type": "action",
+        "description": "Click export CSV button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that CSV file downloads successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify CSV contains correct and complete vehicle log data"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Export vehicle logs in Excel format",
+    "description": "Verify that the Admin can export filtered vehicle entry and exit logs in Excel format without errors and the file includes all necessary data fields.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as Admin"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to historical reports"
+      },
+      {
+        "type": "action",
+        "description": "Apply date filters"
+      },
+      {
+        "type": "action",
+        "description": "Click export Excel button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that Excel file downloads successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Excel file contains correct and complete vehicle log data"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Print gate pass generation for verified vehicle entry",
+    "description": "Verify that from the entry logs, a print-optimized gate pass can be generated correctly without errors and contains all relevant vehicle and driver details.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as User (Admin or Guard)"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to vehicle entry logs"
+      },
+      {
+        "type": "action",
+        "description": "Select a verified and active vehicle entry"
+      },
+      {
+        "type": "action",
+        "description": "Open print gate pass page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify gate pass page loads in print-friendly format"
+      },
+      {
+        "type": "assertion",
+        "description": "Check vehicle details, driver info, token ID, timestamps are present and formatted properly"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Concurrent vehicle entries stress test up to 100,000 records",
+    "description": "Validate the system stability and data consistency while registering a high volume of vehicle entries and exits simultaneously.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate concurrent vehicle entry registrations up to 100,000 records"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no data loss or concurrency errors occur"
+      },
+      {
+        "type": "assertion",
+        "description": "Check all entries have unique token IDs and accurate timestamps"
+      },
+      {
+        "type": "action",
+        "description": "Simulate simultaneous vehicle exits for a subset"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exit timestamps are recorded properly and statuses updated"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Mobile responsiveness of vehicle entry form on handheld devices",
+    "description": "Verify that the vehicle entry registration form UI is fully functional, resizes properly, and is user-friendly on mobile and tablet device screen sizes.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the vehicle entry form page on various mobile and tablet devices or emulators"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the form layout adapts correctly without horizontal scroll"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that all input fields and buttons are easily tappable and usable"
+      },
+      {
+        "type": "action",
+        "description": "Complete and submit form on mobile device"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify form submits successfully and proper confirmation is shown"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Mobile responsiveness of Admin dashboard on handheld devices",
+    "description": "Verify the Admin dashboard UI is fully responsive and usable on mobile and tablet devices including viewing logs and performing status updates.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access Admin dashboard page on mobile phones and tablets or emulators"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify layout adjusts properly without content overlapping"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure all buttons, filters, and log details are accessible and functional"
+      },
+      {
+        "type": "action",
+        "description": "Perform entry approval and record editing from mobile view"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm actions complete successfully with UI feedback"
+      }
+    ]
+  }
+]
