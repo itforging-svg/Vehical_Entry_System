@@ -103,14 +103,16 @@ const Login = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-6" autoComplete="on">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Username / ID</label>
+                            <label htmlFor="username-field" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Username / ID</label>
                             <div className="relative group">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" size={20} />
                                 <input
                                     type="text"
+                                    id="username-field"
                                     name="identifier"
+                                    autoComplete="username"
                                     value={credentials.identifier}
                                     onChange={handleChange}
                                     className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-semibold"
@@ -121,12 +123,14 @@ const Login = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Password</label>
+                            <label htmlFor="password-field" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Password</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" size={20} />
                                 <input
                                     type="password"
+                                    id="password-field"
                                     name="password"
+                                    autoComplete="current-password"
                                     value={credentials.password}
                                     onChange={handleChange}
                                     className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-semibold"
