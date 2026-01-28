@@ -21,6 +21,10 @@ const Dashboard = () => {
     const [blacklist, setBlacklist] = useState([]);
     const [blacklistLoading, setBlacklistLoading] = useState(false);
     const [newBlacklist, setNewBlacklist] = useState({ vehicle_no: '', reason: '' });
+    const [exportRange, setExportRange] = useState('7d');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
+    const [exporting, setExporting] = useState(false);
 
     const username = localStorage.getItem('username');
     const roles = JSON.parse(localStorage.getItem('roles') || '[]');
@@ -154,6 +158,32 @@ const Dashboard = () => {
         }
     };
 
+    const handleDownloadCSV = async () => {
+        try {
+            setExporting(true);
+            let url = `/entry/export?range=${exportRange}`;
+            if (exportRange === 'custom') {
+                if (!customStart || !customEnd) {
+                    alert("Please select both start and end dates");
+                    return;
+                }
+                url += `&start=${customStart}&end=${customEnd}`;
+            }
+
+            const response = await api.get(url, { responseType: 'blob' });
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `vehicle_logs_${exportRange === 'custom' ? `${customStart}_to_${customEnd}` : exportRange}.csv`;
+            link.click();
+        } catch (err) {
+            console.error("Export Failed:", err);
+            alert("Failed to export CSV. " + (err.response?.data?.message || ""));
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const getAllPhotos = (photoJson) => {
         try {
             if (!photoJson) return [];
@@ -259,7 +289,100 @@ const Dashboard = () => {
                             <ShieldAlert size={16} /> Blacklist
                         </button>
                     )}
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => setActiveTab('reports')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'reports' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-500 hover:bg-slate-100'}`}
+                        >
+                            <FileText size={16} /> Export Reports
+                        </button>
+                    )}
                 </div>
+
+                {activeTab === 'reports' && isSuperAdmin && (
+                    <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8 animate-slide-up">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+                                        <FileText size={24} />
+                                    </div>
+                                    Download Entry Reports
+                                </h2>
+                                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Generate CSV data for history and auditing</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                            <div className="space-y-2 lg:col-span-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Time Range</label>
+                                <select
+                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer"
+                                    value={exportRange}
+                                    onChange={(e) => setExportRange(e.target.value)}
+                                >
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="15d">Last 15 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                    <option value="1m">Last 1 Month</option>
+                                    <option value="3m">Last 3 Months</option>
+                                    <option value="6m">Last 6 Months</option>
+                                    <option value="1y">Last 1 Year</option>
+                                    <option value="custom">Custom Date Range</option>
+                                </select>
+                            </div>
+
+                            {exportRange === 'custom' && (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
+                                        <input
+                                            type="date"
+                                            className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                            value={customStart}
+                                            onChange={(e) => setCustomStart(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Date</label>
+                                        <input
+                                            type="date"
+                                            className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                            value={customEnd}
+                                            onChange={(e) => setCustomEnd(e.target.value)}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            <div className={`${exportRange === 'custom' ? 'lg:col-span-1' : 'lg:col-span-3'} flex justify-end`}>
+                                <button
+                                    onClick={handleDownloadCSV}
+                                    disabled={exporting}
+                                    className="h-[60px] px-8 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+                                >
+                                    {exporting ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Printer size={20} />
+                                    )}
+                                    {exporting ? 'Exporting...' : 'Generate CSV'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 p-6 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-4">
+                            <Info className="text-amber-500 shrink-0" size={20} />
+                            <div>
+                                <h4 className="text-amber-800 font-bold text-sm">Data Privacy Notice</h4>
+                                <p className="text-amber-700/70 text-xs mt-1 leading-relaxed">
+                                    CSV exports contain sensitive person identification details including Aadhar and Mobile numbers.
+                                    Ensure downloaded files are handled according to company security policies. Photo data is referenced but not embedded in CSV files.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {activeTab === 'logs' ? (
                     <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden glass">

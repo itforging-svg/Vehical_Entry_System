@@ -9,6 +9,8 @@ router.post('/', entry.create);
 // Protected endpoints - require authentication
 router.get('/today', [authJwt], entry.findToday);
 router.get('/bydate', [authJwt], entry.findByDate);
+router.get('/export', [authJwt], entry.exportCSV); // Must come before /:id route
+router.get('/photo/:id/:index', entry.getPhoto); // Public photo access
 router.get('/history/:identifier', entry.findHistory);
 router.put('/:id/exit', [authJwt], entry.updateExit);
 router.put('/:id/approve', [authJwt], entry.approve);

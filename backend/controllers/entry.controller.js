@@ -445,3 +445,195 @@ exports.findHistory = async (req, res) => {
     }
 };
 
+// Get Photo by Entry ID and Index
+exports.getPhoto = async (req, res) => {
+    try {
+        const { id, index } = req.params;
+        const photoIndex = parseInt(index) || 0;
+
+        const query = `SELECT photo_url FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
+        const result = await client.query(query, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send({ message: "Entry not found" });
+        }
+
+        const log = result.rows[0];
+        if (!log.photo_url) {
+            return res.status(404).send({ message: "No photos available" });
+        }
+
+        let photos = [];
+        try {
+            photos = JSON.parse(log.photo_url);
+        } catch (e) {
+            return res.status(500).send({ message: "Invalid photo data" });
+        }
+
+        if (!Array.isArray(photos) || photos.length === 0) {
+            return res.status(404).send({ message: "No photos available" });
+        }
+
+        if (photoIndex >= photos.length) {
+            return res.status(404).send({ message: "Photo index out of range" });
+        }
+
+        const photoData = photos[photoIndex];
+
+        // Extract base64 data and mime type
+        const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+            return res.status(500).send({ message: "Invalid photo format" });
+        }
+
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Length', imageBuffer.length);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+        res.status(200).send(imageBuffer);
+
+    } catch (err) {
+        console.error("Error in entry.getPhoto:", err);
+        res.status(500).send({ message: err.message });
+    }
+};
+// Export Logs as CSV
+exports.exportCSV = async (req, res) => {
+    try {
+        // Only superadmin can export all fields
+        if (req.userRole !== 'superadmin') {
+            return res.status(403).send({ message: "Only superadmin can perform this action" });
+        }
+
+        const { range, start, end } = req.query;
+        let query = `
+            SELECT e.*, 
+                   CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
+                   b.reason as blacklist_reason
+            FROM entry_logs e
+            LEFT JOIN vehicle_blacklist b ON e.vehicle_reg = b.vehicle_no
+            WHERE e.deleted_at IS NULL
+        `;
+        let values = [];
+
+        if (range === 'custom' && start && end) {
+            query += ` AND e.created_at::date >= $1 AND e.created_at::date <= $2`;
+            values.push(start, end);
+        } else {
+            let days = 0;
+            switch (range) {
+                case '7d': days = 7; break;
+                case '15d': days = 15; break;
+                case '30d': days = 30; break;
+                case '1m': days = 30; break;
+                case '3m': days = 90; break;
+                case '6m': days = 180; break;
+                case '1y': days = 365; break;
+                default: days = 0; // Fallback to all or default
+            }
+            if (days > 0) {
+                query += ` AND e.created_at >= CURRENT_DATE - INTERVAL '${days} days'`;
+            }
+        }
+
+        query += ` ORDER BY e.created_at DESC`;
+
+        const result = await client.query(query, values);
+        const logs = result.rows;
+
+        if (logs.length === 0) {
+            return res.status(404).send({ message: "No records found for the selected range" });
+        }
+
+        // Generate CSV
+        const headers = [
+            'ID', 'Gate Pass No', 'Plant', 'Vehicle Reg', 'Vehicle Type',
+            'Driver Name', 'License No', 'Aadhar No', 'Mobile',
+            'Transporter', 'Challan No', 'Purpose', 'Material Details',
+            'Entry Time', 'Exit Time', 'Duration', 'Approval Status',
+            'Approved By', 'Security Person', 'Photo Links'
+        ];
+
+        let csvContent = headers.join(',') + '\n';
+
+        // Use network IP instead of localhost
+        const serverUrl = 'http://192.168.0.134:5001';
+
+        logs.forEach(log => {
+            // Generate photo links
+            let photoLinks = '';
+            if (log.photo_url) {
+                try {
+                    const photos = JSON.parse(log.photo_url);
+                    if (Array.isArray(photos) && photos.length > 0) {
+                        const links = photos.map((_, idx) => `${serverUrl}/api/entry/photo/${log.id}/${idx}`);
+                        photoLinks = links.join(' | ');
+                    }
+                } catch (e) {
+                    photoLinks = '';
+                }
+            }
+
+            // Format dates without commas to prevent CSV column splitting
+            const formatDateTime = (dateStr) => {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                let hours = date.getHours();
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+            };
+
+            // Calculate duration between entry and exit
+            const calculateDuration = (entryTime, exitTime) => {
+                if (!entryTime || !exitTime) return '';
+                const entry = new Date(entryTime);
+                const exit = new Date(exitTime);
+                const diffMs = exit - entry;
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+                const hours = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                return `${hours}h ${mins}m`;
+            };
+
+            const row = [
+                log.id,
+                log.gate_pass_no || '',
+                `"${(log.plant || '').replace(/"/g, '""')}"`,
+                log.vehicle_reg || '',
+                log.vehicle_type || '',
+                `"${(log.driver_name || '').replace(/"/g, '""')}"`,
+                log.license_no || '',
+                log.aadhar_no || '',
+                log.driver_mobile || '',
+                `"${(log.transporter || '').replace(/"/g, '""')}"`,
+                log.challan_no || '',
+                `"${(log.purpose || '').replace(/"/g, '""')}"`,
+                `"${(log.material_details || '').replace(/"/g, '""')}"`,
+                formatDateTime(log.entry_time),
+                formatDateTime(log.exit_time),
+                calculateDuration(log.entry_time, log.exit_time),
+                log.approval_status || '',
+                log.approved_by || '',
+                `"${(log.security_person_name || '').replace(/"/g, '""')}"`,
+                `"${photoLinks}"`
+            ];
+            csvContent += row.join(',') + '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=vehicle_logs_${range || 'all'}.csv`);
+        res.status(200).send(csvContent);
+
+    } catch (err) {
+        console.error("Error in entry.exportCSV:", err);
+        res.status(500).send({ message: err.message });
+    }
+};
