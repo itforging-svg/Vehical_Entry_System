@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: `https://${window.location.hostname}:5001/api`
+    baseURL: `${import.meta.env.VITE_API_URL || "https://" + window.location.hostname + ":5001"}/api`
 });
 
 api.interceptors.request.use(
