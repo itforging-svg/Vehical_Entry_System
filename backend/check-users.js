@@ -11,7 +11,7 @@ const client = new Client({
 
 async function check() {
     await client.connect();
-    const res = await client.query("SELECT username, role FROM vehicle_system_users WHERE username = 'cslsuperadmin'");
+    const res = await client.query("SELECT username, role, plant FROM vehicle_system_users");
     console.log(JSON.stringify(res.rows, null, 2));
     await client.end();
 }

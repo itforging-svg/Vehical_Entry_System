@@ -218,9 +218,15 @@ const PrintSlip = () => {
                 </div>
 
                 {/* Signatures - Extremely Compact */}
-                <div className="flex justify-start px-2">
+                <div className="flex justify-between px-2 gap-8">
+                    <div className="text-center w-24 border-t border-black pt-0.5">
+                        <p className="text-[7px] font-black uppercase italic text-slate-400 mb-0.5">Authorization</p>
+                        <p className="text-[8px] font-bold uppercase">{log.approved_by || '___________'}</p>
+                        <p className="text-[7px] font-black uppercase">APPROVED BY</p>
+                    </div>
                     <div className="text-center w-20 border-t border-black pt-0.5">
-                        <p className="text-[7px] font-black uppercase">SECURITY</p>
+                        <p className="text-[7px] font-black uppercase italic text-slate-400 mb-0.5">Verification</p>
+                        <p className="text-[7px] font-black uppercase mt-1">SECURITY</p>
                     </div>
                 </div>
 

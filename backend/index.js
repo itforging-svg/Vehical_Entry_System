@@ -31,7 +31,18 @@ if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !pro
     process.exit(1);
 }
 
-app.listen(PORT, () => {
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
+const options = {
+    key: fs.readFileSync(path.join(__dirname, 'key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, 'cert.pem'))
+};
+
+const server = https.createServer(options, app);
+
+server.listen(PORT, () => {
     const os = require('os');
     const networkInterfaces = os.networkInterfaces();
     let networkIP = 'localhost';
@@ -47,6 +58,6 @@ app.listen(PORT, () => {
         if (networkIP !== 'localhost') break;
     }
 
-    console.log(`Vehicle Entry Backend Server: http://localhost:${PORT}`);
-    console.log(`Network Access: http://${networkIP}:${PORT}`);
+    console.log(`Vehicle Entry Backend Server: https://localhost:${PORT}`);
+    console.log(`Network Access: https://${networkIP}:${PORT}`);
 });

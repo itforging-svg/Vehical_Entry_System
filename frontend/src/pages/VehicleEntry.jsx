@@ -28,7 +28,8 @@ const VehicleEntry = () => {
         aadhar_no: '',
         driver_mobile: '',
         challan_no: '',
-        security_person_name: ''
+        security_person_name: '',
+        approved_by: ''
     });
 
     useEffect(() => {
@@ -542,6 +543,18 @@ const VehicleEntry = () => {
                                             className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                                             placeholder="Enter Security Person Name"
                                             required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Approved By</label>
+                                        <input
+                                            type="text"
+                                            name="approved_by"
+                                            value={formData.approved_by}
+                                            onChange={handleChange}
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            placeholder="Enter Authorized Name (e.g. Mr. XYZ)"
                                         />
                                     </div>
                                 </div>

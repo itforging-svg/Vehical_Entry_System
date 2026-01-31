@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api'  // Use proxy instead of direct HTTP call
+    baseURL: `https://${window.location.hostname}:5001/api`
 });
 
 api.interceptors.request.use(

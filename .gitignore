@@ -19,3 +19,19 @@ dist-ssr/
 # System
 Thumbs.db
 Desktop.ini
+
+# Logs
+*.log
+backend/*.log
+frontend/*.log
+
+# SSL Certificates (generated locally)
+backend/cert.pem
+backend/key.pem
+backend/localhost+*.pem
+
+# Temporary scripts
+backend/check-*.js
+backend/fix-*.js
+backend/debug-*.js
+backend/generate-certs.js

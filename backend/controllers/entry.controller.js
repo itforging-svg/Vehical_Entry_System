@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -8,7 +9,10 @@ const client = new Client({
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
-    port: 5432,
+    port: parseInt(process.env.DB_PORT || 5432),
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 client.on('error', err => {
@@ -22,6 +26,20 @@ client.connect()
         console.error('Database Connection Error:', err.message);
         console.error('Check if PostgreSQL is running and credentials in .env are correct.');
     });
+
+// Supabase Storage Client
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Helper to format Date to IST String for Frontend
+const formatToISTString = (dateObj) => {
+    if (!dateObj) return null;
+    // Shift time by 5.5 hours to compensate for toISOString's UTC conversion
+    const shifted = new Date(dateObj.getTime() + (5.5 * 60 * 60 * 1000));
+    return shifted.toISOString().replace('Z', '+05:30');
+};
 
 // Helper to get Realtime IST
 const getRealTimeIST = () => {
@@ -66,6 +84,7 @@ exports.create = async (req, res) => {
             driver_mobile,
             challan_no,
             security_person_name,
+            approved_by,
             photos // Array of dataURLs
         } = req.body;
         // Check Blacklist
@@ -111,23 +130,66 @@ exports.create = async (req, res) => {
             }
         }
 
+        // --- Supabase Storage Logic ---
+        let finalPhotoUrls = [];
+        if (Array.isArray(photos) && photos.length > 0) {
+            console.log(`Processing ${photos.length} photos for storage...`);
+            for (let i = 0; i < photos.length; i++) {
+                const photoData = photos[i];
+                if (photoData.startsWith('data:image')) {
+                    try {
+                        // Extract base64
+                        const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                        const mimeType = matches[1];
+                        const base64Data = matches[2];
+                        const buffer = Buffer.from(base64Data, 'base64');
+                        const extension = mimeType.split('/')[1] || 'jpg';
+                        const fileName = `${gate_pass_no}_${i}_${Date.now()}.${extension}`;
+
+                        // Upload to Supabase Storage
+                        const { data, error } = await supabase.storage
+                            .from('vehicle-photos')
+                            .upload(fileName, buffer, {
+                                contentType: mimeType,
+                                upsert: true
+                            });
+
+                        if (error) throw error;
+
+                        // Get Public URL
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('vehicle-photos')
+                            .getPublicUrl(fileName);
+
+                        finalPhotoUrls.push(publicUrl);
+                        console.log(`Photo ${i} uploaded successfully:`, publicUrl);
+                    } catch (uploadErr) {
+                        console.error(`Failed to upload photo ${i} to Supabase, falling back to Base64:`, uploadErr.message);
+                        finalPhotoUrls.push(photoData); // Fallback to storing base64 in DB
+                    }
+                } else {
+                    finalPhotoUrls.push(photoData);
+                }
+            }
+        }
+
         const query = `
             INSERT INTO entry_logs (
                 plant, vehicle_reg, driver_name, license_no, vehicle_type, 
                 puc_validity, insurance_validity, chassis_last_5, 
                 engine_last_5, purpose, material_details, gate_pass_no, 
                 entry_time, photo_url, status, transporter, aadhar_no, driver_mobile,
-                challan_no, security_person_name
+                challan_no, security_person_name, approved_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In', $15, $16, $17, $18, $19)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'In', $15, $16, $17, $18, $19, $20)
             RETURNING *
         `;
         const values = [
             plant, vehicle_reg, driver_name, license_no, vehicle_type,
             puc_validity, insurance_validity, chassis_last_5,
             engine_last_5, purpose, material_details, gate_pass_no,
-            entry_time, JSON.stringify(photos || []), transporter, aadhar_no, driver_mobile,
-            challan_no, security_person_name
+            entry_time, JSON.stringify(finalPhotoUrls), transporter, aadhar_no, driver_mobile,
+            challan_no, security_person_name, approved_by
         ];
         const result = await client.query(query, values);
         const log = result.rows[0];
@@ -148,13 +210,17 @@ exports.create = async (req, res) => {
 exports.updateExit = async (req, res) => {
     try {
         const id = req.params.id;
+
+        // Use IST for exit time
+        const exit_time = getRealTimeIST();
+
         const query = `
             UPDATE entry_logs 
-            SET exit_time = CURRENT_TIMESTAMP, status = 'Out'
-            WHERE id = $1 AND status = 'In' AND deleted_at IS NULL
+            SET exit_time = $1, status = 'Out'
+            WHERE id = $2 AND status = 'In' AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [id]);
+        const result = await client.query(query, [exit_time, id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Active entry log not found" });
@@ -203,12 +269,20 @@ exports.findToday = async (req, res) => {
         query += ` ORDER BY e.created_at DESC`;
 
         const result = await client.query(query, values);
-        const rows = result.rows.map(row => ({
-            ...row,
-            timestamp: row.entry_time,
-            entry_timestamp: row.entry_time,
-            createdAt: row.created_at
-        }));
+        const rows = result.rows.map(row => {
+            // Convert timestamps to IST strings for frontend display
+            const converted = { ...row };
+            if (row.entry_time) converted.entry_time = formatToISTString(row.entry_time);
+            if (row.exit_time) converted.exit_time = formatToISTString(row.exit_time);
+            if (row.created_at) converted.created_at = formatToISTString(row.created_at);
+
+            return {
+                ...converted,
+                timestamp: converted.entry_time,
+                entry_timestamp: converted.entry_time,
+                createdAt: converted.created_at
+            };
+        });
         res.status(200).send(rows);
     } catch (err) {
         console.error("Error in entry.findToday:", err);
@@ -239,12 +313,20 @@ exports.findByDate = async (req, res) => {
         query += ` ORDER BY e.created_at DESC`;
 
         const result = await client.query(query, values);
-        const rows = result.rows.map(row => ({
-            ...row,
-            timestamp: row.entry_time,
-            entry_timestamp: row.entry_time,
-            createdAt: row.created_at
-        }));
+        const rows = result.rows.map(row => {
+            // Convert timestamps to IST strings for frontend display
+            const converted = { ...row };
+            if (row.entry_time) converted.entry_time = formatToISTString(row.entry_time);
+            if (row.exit_time) converted.exit_time = formatToISTString(row.exit_time);
+            if (row.created_at) converted.created_at = formatToISTString(row.created_at);
+
+            return {
+                ...converted,
+                timestamp: converted.entry_time,
+                entry_timestamp: converted.entry_time,
+                createdAt: converted.created_at
+            };
+        });
         res.status(200).send(rows);
     } catch (err) {
         console.error("Error in entry.findByDate:", err);
@@ -258,11 +340,11 @@ exports.approve = async (req, res) => {
         const id = req.params.id;
         const query = `
             UPDATE entry_logs 
-            SET approval_status = 'Approved', approved_by = $1
-            WHERE id = $2 AND deleted_at IS NULL
+            SET approval_status = 'Approved'
+            WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [req.username || req.userId, id]);
+        const result = await client.query(query, [id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -277,11 +359,11 @@ exports.reject = async (req, res) => {
         const { reason } = req.body;
         const query = `
             UPDATE entry_logs 
-            SET approval_status = 'Rejected', approved_by = $1, rejection_reason = $2
-            WHERE id = $3 AND deleted_at IS NULL
+            SET approval_status = 'Rejected', rejection_reason = $1
+            WHERE id = $2 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [req.username || req.userId, reason, id]);
+        const result = await client.query(query, [reason, id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -297,7 +379,8 @@ exports.update = async (req, res) => {
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
             chassis_last_5, engine_last_5, material_details,
-            challan_no, security_person_name, aadhar_no, driver_mobile
+            challan_no, security_person_name, aadhar_no, driver_mobile,
+            approved_by
         } = req.body;
 
         const query = `
@@ -307,15 +390,17 @@ exports.update = async (req, res) => {
                 plant = $5, license_no = $6, vehicle_type = $7, puc_validity = $8,
                 insurance_validity = $9, chassis_last_5 = $10, engine_last_5 = $11, 
                 material_details = $12, challan_no = $13,
-                security_person_name = $14, aadhar_no = $15, driver_mobile = $16
-            WHERE id = $17 AND deleted_at IS NULL
+                security_person_name = $14, aadhar_no = $15, driver_mobile = $16,
+                approved_by = $17
+            WHERE id = $18 AND deleted_at IS NULL
             RETURNING *
         `;
         const values = [
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
             chassis_last_5, engine_last_5, material_details,
-            challan_no, security_person_name, aadhar_no, driver_mobile, id
+            challan_no, security_person_name, aadhar_no, driver_mobile,
+            approved_by, id
         ];
         const result = await client.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
@@ -480,7 +565,12 @@ exports.getPhoto = async (req, res) => {
 
         const photoData = photos[photoIndex];
 
-        // Extract base64 data and mime type
+        // NEW: If it's a URL (Supabase Storage), redirect to it
+        if (photoData.startsWith('http')) {
+            return res.redirect(photoData);
+        }
+
+        // OLD: Extract base64 data and mime type
         const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (!matches || matches.length !== 3) {
             return res.status(500).send({ message: "Invalid photo format" });
@@ -560,7 +650,7 @@ exports.exportCSV = async (req, res) => {
         let csvContent = headers.join(',') + '\n';
 
         // Use network IP instead of localhost
-        const serverUrl = 'http://192.168.0.134:5001';
+        const serverUrl = 'https://192.168.0.22:5001';
 
         logs.forEach(log => {
             // Generate photo links
@@ -569,7 +659,10 @@ exports.exportCSV = async (req, res) => {
                 try {
                     const photos = JSON.parse(log.photo_url);
                     if (Array.isArray(photos) && photos.length > 0) {
-                        const links = photos.map((_, idx) => `${serverUrl}/api/entry/photo/${log.id}/${idx}`);
+                        const links = photos.map((p, idx) => {
+                            if (p.startsWith('http')) return p; // Direct Supabase Link
+                            return `${serverUrl}/api/entry/photo/${log.id}/${idx}`; // Internal Base64 Proxy
+                        });
                         photoLinks = links.join(' | ');
                     }
                 } catch (e) {

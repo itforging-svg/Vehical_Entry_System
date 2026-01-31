@@ -889,6 +889,15 @@ const Dashboard = () => {
                                             onChange={e => setEditData({ ...editData, security_person_name: e.target.value })}
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">Approved By</label>
+                                        <input
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-semibold"
+                                            value={editData.approved_by || ''}
+                                            onChange={e => setEditData({ ...editData, approved_by: e.target.value })}
+                                            placeholder="Authorized Manager Name"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Technical Validity */}
