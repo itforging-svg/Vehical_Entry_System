@@ -12,7 +12,7 @@ const Landing = () => {
         if (selectedSystem === 'vehicle') {
             navigate('/entry');
         } else if (selectedSystem === 'visitor') {
-            window.location.href = 'https://192.168.0.22:3000/';
+            window.location.href = 'https://visitor1.chandansteel.net/';
         }
     };
 
