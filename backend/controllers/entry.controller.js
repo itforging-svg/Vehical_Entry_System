@@ -1,31 +1,9 @@
-const { Client } = require('pg');
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || 5432),
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
-
-client.on('error', err => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
-});
-
-client.connect()
-    .then(() => console.log('Connected to PostgreSQL Database'))
-    .catch(err => {
-        console.error('Database Connection Error:', err.message);
-        console.error('Check if PostgreSQL is running and credentials in .env are correct.');
-    });
+const db = require('../db/client');
 
 // Supabase Storage Client
 const supabase = createClient(
@@ -87,8 +65,22 @@ exports.create = async (req, res) => {
             approved_by,
             photos // Array of dataURLs
         } = req.body;
+
+        if (!vehicle_reg || typeof vehicle_reg !== 'string') {
+            return res.status(400).send({ message: 'vehicle_reg is required and must be a string.' });
+        }
+
+        const normalizedVehicleReg = vehicle_reg.trim().toUpperCase();
+        if (!normalizedVehicleReg) {
+            return res.status(400).send({ message: 'vehicle_reg cannot be empty.' });
+        }
+
+        if (photos !== undefined && !Array.isArray(photos)) {
+            return res.status(400).send({ message: 'photos must be an array when provided.' });
+        }
+
         // Check Blacklist
-        const blacklistCheck = await client.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [vehicle_reg.toUpperCase()]);
+        const blacklistCheck = await db.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [normalizedVehicleReg]);
         if (blacklistCheck.rows.length > 0) {
             const block = blacklistCheck.rows[0];
             return res.status(403).send({
@@ -117,7 +109,7 @@ exports.create = async (req, res) => {
             SELECT COUNT(*) FROM entry_logs 
             WHERE created_at::date = CURRENT_DATE AND deleted_at IS NULL
         `;
-        const countRes = await client.query(countQuery);
+        const countRes = await db.query(countQuery);
         const seq = (parseInt(countRes.rows[0].count) + 1).toString().padStart(2, '0');
 
         const gate_pass_no = `CSL-${category}-${dateStr}-${seq}`;
@@ -136,10 +128,14 @@ exports.create = async (req, res) => {
             console.log(`Processing ${photos.length} photos for storage...`);
             for (let i = 0; i < photos.length; i++) {
                 const photoData = photos[i];
-                if (photoData.startsWith('data:image')) {
+                if (typeof photoData === 'string' && photoData.startsWith('data:image')) {
                     try {
                         // Extract base64
                         const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                        if (!matches || matches.length < 3) {
+                            throw new Error('Invalid base64 image payload');
+                        }
+
                         const mimeType = matches[1];
                         const base64Data = matches[2];
                         const buffer = Buffer.from(base64Data, 'base64');
@@ -185,13 +181,13 @@ exports.create = async (req, res) => {
             RETURNING *
         `;
         const values = [
-            plant, vehicle_reg, driver_name, license_no, vehicle_type,
+            plant, normalizedVehicleReg, driver_name, license_no, vehicle_type,
             puc_validity, insurance_validity, chassis_last_5,
             engine_last_5, purpose, material_details, gate_pass_no,
             entry_time, JSON.stringify(finalPhotoUrls), transporter, aadhar_no, driver_mobile,
             challan_no, security_person_name, approved_by
         ];
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const log = result.rows[0];
 
         // Add timestamp aliases for TestSprite compatibility
@@ -220,7 +216,7 @@ exports.updateExit = async (req, res) => {
             WHERE id = $2 AND status = 'In' AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [exit_time, id]);
+        const result = await db.query(query, [exit_time, id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Active entry log not found" });
@@ -268,7 +264,7 @@ exports.findToday = async (req, res) => {
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const rows = result.rows.map(row => {
             // Convert timestamps to IST strings for frontend display
             const converted = { ...row };
@@ -312,7 +308,7 @@ exports.findByDate = async (req, res) => {
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const rows = result.rows.map(row => {
             // Convert timestamps to IST strings for frontend display
             const converted = { ...row };
@@ -344,7 +340,7 @@ exports.approve = async (req, res) => {
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -363,7 +359,7 @@ exports.reject = async (req, res) => {
             WHERE id = $2 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [reason, id]);
+        const result = await db.query(query, [reason, id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -402,7 +398,7 @@ exports.update = async (req, res) => {
             challan_no, security_person_name, aadhar_no, driver_mobile,
             approved_by, id
         ];
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -425,7 +421,7 @@ exports.softDelete = async (req, res) => {
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Entry not found or already deleted" });
@@ -463,7 +459,7 @@ exports.findOne = async (req, res) => {
             return res.status(404).send({ message: "Invalid identifier format" });
         }
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         console.log("DB Result Row Count:", result.rows.length);
 
         if (result.rows.length === 0) {
@@ -503,7 +499,7 @@ exports.findHistory = async (req, res) => {
             ORDER BY created_at DESC
             LIMIT 1
         `;
-        const result = await client.query(query, [identifier.trim()]);
+        const result = await db.query(query, [identifier.trim()]);
 
         console.log("Query executed. Rows found:", result.rows.length);
 
@@ -537,7 +533,7 @@ exports.getPhoto = async (req, res) => {
         const photoIndex = parseInt(index) || 0;
 
         const query = `SELECT photo_url FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Entry not found" });
@@ -631,7 +627,7 @@ exports.exportCSV = async (req, res) => {
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const logs = result.rows;
 
         if (logs.length === 0) {
