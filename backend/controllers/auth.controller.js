@@ -1,19 +1,10 @@
-const { Client } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: 5432,
-});
-
-client.connect();
+const db = require('../db/client');
 
 exports.signin = async (req, res) => {
     try {
@@ -22,7 +13,7 @@ exports.signin = async (req, res) => {
         console.log("Signin attempt:", loginId);
 
         const query = 'SELECT * FROM vehicle_system_users WHERE username = $1';
-        const result = await client.query(query, [loginId]);
+        const result = await db.query(query, [loginId]);
 
         if (result.rows.length === 0) {
             console.log("User not found:", identifier);
