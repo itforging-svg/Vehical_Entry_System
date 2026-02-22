@@ -41,6 +41,13 @@ const getRealTimeIST = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}+05:30`;
 };
 
+const isValidIsoDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isPositiveInteger = (value) => typeof value === 'string' && /^\d+$/.test(value);
+const sanitizeForCsv = (value) => {
+    const str = value === undefined || value === null ? '' : String(value);
+    return /^[=+\-@]/.test(str) ? `'${str}` : str;
+};
+
 // Register Entry
 exports.create = async (req, res) => {
     try {
@@ -206,6 +213,9 @@ exports.create = async (req, res) => {
 exports.updateExit = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
 
         // Use IST for exit time
         const exit_time = getRealTimeIST();
@@ -290,6 +300,10 @@ exports.findToday = async (req, res) => {
 exports.findByDate = async (req, res) => {
     try {
         const { date } = req.query; // Format: YYYY-MM-DD
+        if (date && !isValidIsoDate(date)) {
+            return res.status(400).send({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+        }
+
         let query = `
             SELECT e.*,
                    CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
@@ -334,6 +348,10 @@ exports.findByDate = async (req, res) => {
 exports.approve = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const query = `
             UPDATE entry_logs 
             SET approval_status = 'Approved'
@@ -352,6 +370,10 @@ exports.approve = async (req, res) => {
 exports.reject = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const { reason } = req.body;
         const query = `
             UPDATE entry_logs 
@@ -371,6 +393,10 @@ exports.reject = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const {
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
@@ -410,6 +436,10 @@ exports.update = async (req, res) => {
 exports.softDelete = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         // Verify only superadmin can delete
         if (req.userRole !== 'superadmin') {
             return res.status(403).send({ message: "Only superadmin can perform this action" });
@@ -449,7 +479,7 @@ exports.findOne = async (req, res) => {
             query = `SELECT * FROM entry_logs WHERE gate_pass_no = $1 AND deleted_at IS NULL`;
         }
         // 2. Try to detect if it's a Numeric ID
-        else if (!isNaN(identifier) && !isNaN(parseFloat(identifier))) {
+        else if (isPositiveInteger(identifier)) {
             console.log("Detected format: Numeric ID");
             query = `SELECT * FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
         }
@@ -530,7 +560,14 @@ exports.findHistory = async (req, res) => {
 exports.getPhoto = async (req, res) => {
     try {
         const { id, index } = req.params;
-        const photoIndex = parseInt(index) || 0;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
+        const photoIndex = parseInt(index, 10) || 0;
+        if (photoIndex < 0) {
+            return res.status(400).send({ message: 'Invalid photo index.' });
+        }
 
         const query = `SELECT photo_url FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
         const result = await db.query(query, [id]);
@@ -595,6 +632,9 @@ exports.exportCSV = async (req, res) => {
         }
 
         const { range, start, end } = req.query;
+        if (range === 'custom' && (!isValidIsoDate(start) || !isValidIsoDate(end))) {
+            return res.status(400).send({ message: 'Invalid custom date range. Use YYYY-MM-DD for start and end.' });
+        }
         let query = `
             SELECT e.*, 
                    CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
@@ -621,7 +661,8 @@ exports.exportCSV = async (req, res) => {
                 default: days = 0; // Fallback to all or default
             }
             if (days > 0) {
-                query += ` AND e.created_at >= CURRENT_DATE - INTERVAL '${days} days'`;
+                values.push(days);
+                query += ` AND e.created_at >= CURRENT_DATE - ($${values.length}::int * INTERVAL '1 day')`;
             }
         }
 
@@ -645,8 +686,7 @@ exports.exportCSV = async (req, res) => {
 
         let csvContent = headers.join(',') + '\n';
 
-        // Use network IP instead of localhost
-        const serverUrl = 'https://192.168.0.22:5001';
+        const serverUrl = `${req.protocol}://${req.get('host')}`;
 
         logs.forEach(log => {
             // Generate photo links
@@ -693,26 +733,26 @@ exports.exportCSV = async (req, res) => {
             };
 
             const row = [
-                log.id,
-                log.gate_pass_no || '',
-                `"${(log.plant || '').replace(/"/g, '""')}"`,
-                log.vehicle_reg || '',
-                log.vehicle_type || '',
-                `"${(log.driver_name || '').replace(/"/g, '""')}"`,
-                log.license_no || '',
-                log.aadhar_no || '',
-                log.driver_mobile || '',
-                `"${(log.transporter || '').replace(/"/g, '""')}"`,
-                log.challan_no || '',
-                `"${(log.purpose || '').replace(/"/g, '""')}"`,
-                `"${(log.material_details || '').replace(/"/g, '""')}"`,
-                formatDateTime(log.entry_time),
-                formatDateTime(log.exit_time),
-                calculateDuration(log.entry_time, log.exit_time),
-                log.approval_status || '',
-                log.approved_by || '',
-                `"${(log.security_person_name || '').replace(/"/g, '""')}"`,
-                `"${photoLinks}"`
+                sanitizeForCsv(log.id),
+                sanitizeForCsv(log.gate_pass_no || ''),
+                `"${sanitizeForCsv((log.plant || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.vehicle_reg || ''),
+                sanitizeForCsv(log.vehicle_type || ''),
+                `"${sanitizeForCsv((log.driver_name || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.license_no || ''),
+                sanitizeForCsv(log.aadhar_no || ''),
+                sanitizeForCsv(log.driver_mobile || ''),
+                `"${sanitizeForCsv((log.transporter || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.challan_no || ''),
+                `"${sanitizeForCsv((log.purpose || '').replace(/"/g, '""'))}"`,
+                `"${sanitizeForCsv((log.material_details || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(formatDateTime(log.entry_time)),
+                sanitizeForCsv(formatDateTime(log.exit_time)),
+                sanitizeForCsv(calculateDuration(log.entry_time, log.exit_time)),
+                sanitizeForCsv(log.approval_status || ''),
+                sanitizeForCsv(log.approved_by || ''),
+                `"${sanitizeForCsv((log.security_person_name || '').replace(/"/g, '""'))}"`,
+                `"${sanitizeForCsv(photoLinks)}"`
             ];
             csvContent += row.join(',') + '\n';
         });
