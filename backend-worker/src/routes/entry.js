@@ -9,6 +9,9 @@ const entry = new Hono();
 const protectedRoutes = ['/today', '/bydate', '/export', '/:id/exit', '/:id/approve', '/:id/reject', '/:id'];
 protectedRoutes.forEach(path => entry.use(path, authMiddleware));
 
+const isSafeIdentifier = (value) => typeof value === 'string' && /^[a-zA-Z0-9._\-\s]{1,100}$/.test(value);
+
+
 // REGISTER ENTRY (Public - no auth)
 entry.post('/', async (c) => {
     try {
@@ -20,13 +23,22 @@ entry.post('/', async (c) => {
             challan_no, security_person_name, approved_by, photos
         } = body;
 
+        if (!vehicle_reg || typeof vehicle_reg !== 'string' || !vehicle_reg.trim()) {
+            return c.json({ message: 'vehicle_reg is required and must be a non-empty string' }, 400);
+        }
+
+        if (photos !== undefined && !Array.isArray(photos)) {
+            return c.json({ message: 'photos must be an array when provided' }, 400);
+        }
+
+        const normalizedVehicleReg = vehicle_reg.trim().toUpperCase();
         const supabase = getSupabaseClient(c.env);
 
         // 1. Check Blacklist
         const { data: blacklist, error: blError } = await supabase
             .from('vehicle_blacklist')
             .select('*')
-            .eq('vehicle_no', vehicle_reg.toUpperCase())
+            .eq('vehicle_no', normalizedVehicleReg)
             .limit(1);
 
         if (blError) throw blError;
@@ -62,9 +74,13 @@ entry.post('/', async (c) => {
         if (Array.isArray(photos) && photos.length > 0) {
             for (let i = 0; i < photos.length; i++) {
                 const photoData = photos[i];
-                if (photoData.startsWith('data:image')) {
+                if (typeof photoData === 'string' && photoData.startsWith('data:image')) {
                     try {
                         const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                        if (!matches || matches.length < 3) {
+                            throw new Error('Invalid base64 image payload');
+                        }
+
                         const mimeType = matches[1];
                         const base64Data = matches[2];
 
@@ -106,7 +122,7 @@ entry.post('/', async (c) => {
         const { data: log, error: insertError } = await supabase
             .from('entry_logs')
             .insert([{
-                plant, vehicle_reg: vehicle_reg.toUpperCase(), driver_name, license_no, vehicle_type,
+                plant, vehicle_reg: normalizedVehicleReg, driver_name, license_no, vehicle_type,
                 puc_validity, insurance_validity, chassis_last_5, engine_last_5,
                 purpose, material_details, gate_pass_no, entry_time,
                 photo_url: JSON.stringify(finalPhotoUrls), status: 'In',
@@ -413,6 +429,10 @@ entry.get('/:id', async (c) => {
 entry.get('/history/:identifier', async (c) => {
     try {
         const identifier = c.req.param('identifier').trim();
+        if (!isSafeIdentifier(identifier)) {
+            return c.json({ message: 'Invalid identifier format' }, 400);
+        }
+
         const supabase = getSupabaseClient(c.env);
 
         const { data, error } = await supabase

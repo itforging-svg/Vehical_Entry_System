@@ -1,31 +1,9 @@
-const { Client } = require('pg');
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || 5432),
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
-
-client.on('error', err => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
-});
-
-client.connect()
-    .then(() => console.log('Connected to PostgreSQL Database'))
-    .catch(err => {
-        console.error('Database Connection Error:', err.message);
-        console.error('Check if PostgreSQL is running and credentials in .env are correct.');
-    });
+const db = require('../db/client');
 
 // Supabase Storage Client
 const supabase = createClient(
@@ -63,6 +41,13 @@ const getRealTimeIST = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}+05:30`;
 };
 
+const isValidIsoDate = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isPositiveInteger = (value) => typeof value === 'string' && /^\d+$/.test(value);
+const sanitizeForCsv = (value) => {
+    const str = value === undefined || value === null ? '' : String(value);
+    return /^[=+\-@]/.test(str) ? `'${str}` : str;
+};
+
 // Register Entry
 exports.create = async (req, res) => {
     try {
@@ -87,8 +72,22 @@ exports.create = async (req, res) => {
             approved_by,
             photos // Array of dataURLs
         } = req.body;
+
+        if (!vehicle_reg || typeof vehicle_reg !== 'string') {
+            return res.status(400).send({ message: 'vehicle_reg is required and must be a string.' });
+        }
+
+        const normalizedVehicleReg = vehicle_reg.trim().toUpperCase();
+        if (!normalizedVehicleReg) {
+            return res.status(400).send({ message: 'vehicle_reg cannot be empty.' });
+        }
+
+        if (photos !== undefined && !Array.isArray(photos)) {
+            return res.status(400).send({ message: 'photos must be an array when provided.' });
+        }
+
         // Check Blacklist
-        const blacklistCheck = await client.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [vehicle_reg.toUpperCase()]);
+        const blacklistCheck = await db.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [normalizedVehicleReg]);
         if (blacklistCheck.rows.length > 0) {
             const block = blacklistCheck.rows[0];
             return res.status(403).send({
@@ -117,7 +116,7 @@ exports.create = async (req, res) => {
             SELECT COUNT(*) FROM entry_logs 
             WHERE created_at::date = CURRENT_DATE AND deleted_at IS NULL
         `;
-        const countRes = await client.query(countQuery);
+        const countRes = await db.query(countQuery);
         const seq = (parseInt(countRes.rows[0].count) + 1).toString().padStart(2, '0');
 
         const gate_pass_no = `CSL-${category}-${dateStr}-${seq}`;
@@ -136,10 +135,14 @@ exports.create = async (req, res) => {
             console.log(`Processing ${photos.length} photos for storage...`);
             for (let i = 0; i < photos.length; i++) {
                 const photoData = photos[i];
-                if (photoData.startsWith('data:image')) {
+                if (typeof photoData === 'string' && photoData.startsWith('data:image')) {
                     try {
                         // Extract base64
                         const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                        if (!matches || matches.length < 3) {
+                            throw new Error('Invalid base64 image payload');
+                        }
+
                         const mimeType = matches[1];
                         const base64Data = matches[2];
                         const buffer = Buffer.from(base64Data, 'base64');
@@ -185,13 +188,13 @@ exports.create = async (req, res) => {
             RETURNING *
         `;
         const values = [
-            plant, vehicle_reg, driver_name, license_no, vehicle_type,
+            plant, normalizedVehicleReg, driver_name, license_no, vehicle_type,
             puc_validity, insurance_validity, chassis_last_5,
             engine_last_5, purpose, material_details, gate_pass_no,
             entry_time, JSON.stringify(finalPhotoUrls), transporter, aadhar_no, driver_mobile,
             challan_no, security_person_name, approved_by
         ];
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const log = result.rows[0];
 
         // Add timestamp aliases for TestSprite compatibility
@@ -210,6 +213,9 @@ exports.create = async (req, res) => {
 exports.updateExit = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
 
         // Use IST for exit time
         const exit_time = getRealTimeIST();
@@ -220,7 +226,7 @@ exports.updateExit = async (req, res) => {
             WHERE id = $2 AND status = 'In' AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [exit_time, id]);
+        const result = await db.query(query, [exit_time, id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Active entry log not found" });
@@ -268,7 +274,7 @@ exports.findToday = async (req, res) => {
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const rows = result.rows.map(row => {
             // Convert timestamps to IST strings for frontend display
             const converted = { ...row };
@@ -294,6 +300,10 @@ exports.findToday = async (req, res) => {
 exports.findByDate = async (req, res) => {
     try {
         const { date } = req.query; // Format: YYYY-MM-DD
+        if (date && !isValidIsoDate(date)) {
+            return res.status(400).send({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+        }
+
         let query = `
             SELECT e.*,
                    CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
@@ -312,7 +322,7 @@ exports.findByDate = async (req, res) => {
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const rows = result.rows.map(row => {
             // Convert timestamps to IST strings for frontend display
             const converted = { ...row };
@@ -338,13 +348,17 @@ exports.findByDate = async (req, res) => {
 exports.approve = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const query = `
             UPDATE entry_logs 
             SET approval_status = 'Approved'
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -356,6 +370,10 @@ exports.approve = async (req, res) => {
 exports.reject = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const { reason } = req.body;
         const query = `
             UPDATE entry_logs 
@@ -363,7 +381,7 @@ exports.reject = async (req, res) => {
             WHERE id = $2 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [reason, id]);
+        const result = await db.query(query, [reason, id]);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -375,6 +393,10 @@ exports.reject = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         const {
             driver_name, vehicle_reg, purpose, transporter, plant,
             license_no, vehicle_type, puc_validity, insurance_validity,
@@ -402,7 +424,7 @@ exports.update = async (req, res) => {
             challan_no, security_person_name, aadhar_no, driver_mobile,
             approved_by, id
         ];
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         if (result.rows.length === 0) return res.status(404).send({ message: "Log not found" });
         res.status(200).send(result.rows[0]);
     } catch (err) {
@@ -414,6 +436,10 @@ exports.update = async (req, res) => {
 exports.softDelete = async (req, res) => {
     try {
         const id = req.params.id;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
         // Verify only superadmin can delete
         if (req.userRole !== 'superadmin') {
             return res.status(403).send({ message: "Only superadmin can perform this action" });
@@ -425,7 +451,7 @@ exports.softDelete = async (req, res) => {
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING *
         `;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Entry not found or already deleted" });
@@ -453,7 +479,7 @@ exports.findOne = async (req, res) => {
             query = `SELECT * FROM entry_logs WHERE gate_pass_no = $1 AND deleted_at IS NULL`;
         }
         // 2. Try to detect if it's a Numeric ID
-        else if (!isNaN(identifier) && !isNaN(parseFloat(identifier))) {
+        else if (isPositiveInteger(identifier)) {
             console.log("Detected format: Numeric ID");
             query = `SELECT * FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
         }
@@ -463,7 +489,7 @@ exports.findOne = async (req, res) => {
             return res.status(404).send({ message: "Invalid identifier format" });
         }
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         console.log("DB Result Row Count:", result.rows.length);
 
         if (result.rows.length === 0) {
@@ -503,7 +529,7 @@ exports.findHistory = async (req, res) => {
             ORDER BY created_at DESC
             LIMIT 1
         `;
-        const result = await client.query(query, [identifier.trim()]);
+        const result = await db.query(query, [identifier.trim()]);
 
         console.log("Query executed. Rows found:", result.rows.length);
 
@@ -534,10 +560,17 @@ exports.findHistory = async (req, res) => {
 exports.getPhoto = async (req, res) => {
     try {
         const { id, index } = req.params;
-        const photoIndex = parseInt(index) || 0;
+        if (!isPositiveInteger(id)) {
+            return res.status(400).send({ message: 'Invalid id format.' });
+        }
+
+        const photoIndex = parseInt(index, 10) || 0;
+        if (photoIndex < 0) {
+            return res.status(400).send({ message: 'Invalid photo index.' });
+        }
 
         const query = `SELECT photo_url FROM entry_logs WHERE id = $1 AND deleted_at IS NULL`;
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Entry not found" });
@@ -599,6 +632,9 @@ exports.exportCSV = async (req, res) => {
         }
 
         const { range, start, end } = req.query;
+        if (range === 'custom' && (!isValidIsoDate(start) || !isValidIsoDate(end))) {
+            return res.status(400).send({ message: 'Invalid custom date range. Use YYYY-MM-DD for start and end.' });
+        }
         let query = `
             SELECT e.*, 
                    CASE WHEN b.id IS NOT NULL THEN true ELSE false END as is_blacklisted,
@@ -625,13 +661,14 @@ exports.exportCSV = async (req, res) => {
                 default: days = 0; // Fallback to all or default
             }
             if (days > 0) {
-                query += ` AND e.created_at >= CURRENT_DATE - INTERVAL '${days} days'`;
+                values.push(days);
+                query += ` AND e.created_at >= CURRENT_DATE - ($${values.length}::int * INTERVAL '1 day')`;
             }
         }
 
         query += ` ORDER BY e.created_at DESC`;
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         const logs = result.rows;
 
         if (logs.length === 0) {
@@ -649,8 +686,7 @@ exports.exportCSV = async (req, res) => {
 
         let csvContent = headers.join(',') + '\n';
 
-        // Use network IP instead of localhost
-        const serverUrl = 'https://192.168.0.22:5001';
+        const serverUrl = `${req.protocol}://${req.get('host')}`;
 
         logs.forEach(log => {
             // Generate photo links
@@ -697,26 +733,26 @@ exports.exportCSV = async (req, res) => {
             };
 
             const row = [
-                log.id,
-                log.gate_pass_no || '',
-                `"${(log.plant || '').replace(/"/g, '""')}"`,
-                log.vehicle_reg || '',
-                log.vehicle_type || '',
-                `"${(log.driver_name || '').replace(/"/g, '""')}"`,
-                log.license_no || '',
-                log.aadhar_no || '',
-                log.driver_mobile || '',
-                `"${(log.transporter || '').replace(/"/g, '""')}"`,
-                log.challan_no || '',
-                `"${(log.purpose || '').replace(/"/g, '""')}"`,
-                `"${(log.material_details || '').replace(/"/g, '""')}"`,
-                formatDateTime(log.entry_time),
-                formatDateTime(log.exit_time),
-                calculateDuration(log.entry_time, log.exit_time),
-                log.approval_status || '',
-                log.approved_by || '',
-                `"${(log.security_person_name || '').replace(/"/g, '""')}"`,
-                `"${photoLinks}"`
+                sanitizeForCsv(log.id),
+                sanitizeForCsv(log.gate_pass_no || ''),
+                `"${sanitizeForCsv((log.plant || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.vehicle_reg || ''),
+                sanitizeForCsv(log.vehicle_type || ''),
+                `"${sanitizeForCsv((log.driver_name || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.license_no || ''),
+                sanitizeForCsv(log.aadhar_no || ''),
+                sanitizeForCsv(log.driver_mobile || ''),
+                `"${sanitizeForCsv((log.transporter || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(log.challan_no || ''),
+                `"${sanitizeForCsv((log.purpose || '').replace(/"/g, '""'))}"`,
+                `"${sanitizeForCsv((log.material_details || '').replace(/"/g, '""'))}"`,
+                sanitizeForCsv(formatDateTime(log.entry_time)),
+                sanitizeForCsv(formatDateTime(log.exit_time)),
+                sanitizeForCsv(calculateDuration(log.entry_time, log.exit_time)),
+                sanitizeForCsv(log.approval_status || ''),
+                sanitizeForCsv(log.approved_by || ''),
+                `"${sanitizeForCsv((log.security_person_name || '').replace(/"/g, '""'))}"`,
+                `"${sanitizeForCsv(photoLinks)}"`
             ];
             csvContent += row.join(',') + '\n';
         });

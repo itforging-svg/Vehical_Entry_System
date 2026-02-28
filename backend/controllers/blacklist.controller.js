@@ -1,23 +1,14 @@
-const { Client } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: 5432,
-});
-
-client.connect();
+const db = require('../db/client');
 
 // Get all blacklisted vehicles
 exports.list = async (req, res) => {
     try {
         const query = 'SELECT * FROM vehicle_blacklist ORDER BY created_at DESC';
-        const result = await client.query(query);
+        const result = await db.query(query);
         res.status(200).send(result.rows);
     } catch (err) {
         console.error("Blacklist list error:", err);
@@ -37,12 +28,12 @@ exports.add = async (req, res) => {
         const query = 'INSERT INTO vehicle_blacklist (vehicle_no, reason, created_by) VALUES ($1, $2, $3) RETURNING *';
         const values = [vehicle_no.toUpperCase(), reason, req.username || 'admin'];
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         res.status(201).send(result.rows[0]);
     } catch (err) {
         if (err.code === '23505') { // Unique violation
             console.log("Blacklist: entry already exists for", req.body.vehicle_no);
-            const check = await client.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [req.body.vehicle_no.toUpperCase()]);
+            const check = await db.query('SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1', [req.body.vehicle_no.toUpperCase()]);
             return res.status(200).send(check.rows[0]);
         }
         console.error("Blacklist add error:", err);
@@ -55,7 +46,7 @@ exports.remove = async (req, res) => {
     try {
         const { id } = req.params;
         const query = 'DELETE FROM vehicle_blacklist WHERE id = $1 RETURNING *';
-        const result = await client.query(query, [id]);
+        const result = await db.query(query, [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({ message: "Blacklist entry not found." });
@@ -72,7 +63,7 @@ exports.check = async (req, res) => {
     try {
         const { vehicle_no } = req.params;
         const query = 'SELECT * FROM vehicle_blacklist WHERE vehicle_no = $1';
-        const result = await client.query(query, [vehicle_no.toUpperCase()]);
+        const result = await db.query(query, [vehicle_no.toUpperCase()]);
 
         if (result.rows.length > 0) {
             return res.status(200).send({
