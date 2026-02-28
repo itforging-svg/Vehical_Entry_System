@@ -3,6 +3,7 @@ import { jwt } from 'hono/jwt';
 export const authMiddleware = (c, next) => {
     const jwtMiddleware = jwt({
         secret: c.env.JWT_SECRET,
+        alg: 'HS256',
         header: 'Authorization',
         prefix: 'Bearer',
     });
@@ -17,10 +18,11 @@ export const authMiddleware = (c, next) => {
 };
 
 export const getUserContext = (c) => {
-    const payload = c.get('jwtPayload');
+    const payload = c.get('jwtPayload') || {};
     return {
         userId: payload.id,
-        userRole: payload.role,
+        userName: payload.username,
+        userRole: payload.role || payload.roles?.[0], // Handle both role and roles
         userPlant: payload.plant
     };
 };

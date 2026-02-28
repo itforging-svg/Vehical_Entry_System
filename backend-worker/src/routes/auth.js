@@ -5,14 +5,24 @@ import { getSupabaseClient } from '../utils/db.js';
 
 const auth = new Hono();
 
-// LOGIN
-auth.post('/login', async (c) => {
+// LOGIN (Aliases for both /login and /signin)
+auth.post('/login', async (c) => handleLogin(c));
+auth.post('/signin', async (c) => handleLogin(c));
+
+async function handleLogin(c) {
     try {
-        const { username, password } = await c.req.json();
+        const body = await c.req.json();
+        const username = body.identifier || body.username;
+        const password = body.password;
+
+        if (!username) {
+            return c.json({ message: 'Username/Identifier is required' }, 400);
+        }
+
         const supabase = getSupabaseClient(c.env);
 
         const { data: user, error } = await supabase
-            .from('system_users')
+            .from('vehicle_system_users') // Correct table name
             .select('*')
             .eq('username', username)
             .single();
@@ -30,6 +40,7 @@ auth.post('/login', async (c) => {
         const token = await sign(
             {
                 id: user.id,
+                username: user.username,
                 role: user.role,
                 plant: user.plant,
                 exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
@@ -41,6 +52,7 @@ auth.post('/login', async (c) => {
             id: user.id,
             username: user.username,
             role: user.role,
+            roles: [user.role], // Frontend expects an array
             plant: user.plant,
             accessToken: token
         });
@@ -49,7 +61,7 @@ auth.post('/login', async (c) => {
         console.error('Login error:', err);
         return c.json({ message: err.message }, 500);
     }
-});
+}
 
 // REGISTER (Admin only)
 auth.post('/register', async (c) => {
@@ -60,7 +72,7 @@ auth.post('/register', async (c) => {
         const hashedPassword = await bcrypt.hash(password, 8);
 
         const { data, error } = await supabase
-            .from('system_users')
+            .from('vehicle_system_users')
             .insert([
                 { username, password: hashedPassword, role, plant }
             ])

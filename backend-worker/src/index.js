@@ -7,7 +7,11 @@ import blacklistRoutes from './routes/blacklist.js';
 const app = new Hono();
 
 // Global Middleware
-app.use('/*', cors());
+app.use('/*', cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    exposeHeaders: ['Content-Disposition'],
+}));
 
 // Root path
 app.get('/', (c) => {

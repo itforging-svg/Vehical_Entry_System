@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { authMiddleware, getUserContext } from '../middleware/auth.js';
 import { getSupabaseClient } from '../utils/db.js';
-import { formatToISTString, getRealTimeIST } from '../utils/helpers.js';
+import { formatToISTString, formatRawIST, getRealTimeIST } from '../utils/helpers.js';
 
 const entry = new Hono();
 
@@ -133,19 +133,23 @@ entry.post('/', async (c) => {
 entry.get('/today', async (c) => {
     try {
         const supabase = getSupabaseClient(c.env);
-        const { userRole, userPlant } = getUserContext(c);
+        const { userName, userRole, userPlant } = getUserContext(c);
 
         const todayStr = new Date().toISOString().split('T')[0];
 
         let query = supabase
             .from('entry_logs')
-            .select('*, vehicle_blacklist(reason)')
+            .select('*')
             .gte('created_at', todayStr)
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
-        if (userRole !== 'superadmin' && userPlant) {
-            query = query.eq('plant', userPlant);
+        if (userRole !== 'superadmin' && userRole !== 'cslsuperadmin' && userPlant) {
+            if (userName === 'admin_seamless') {
+                query = query.in('plant', [userPlant, 'Wire Plant']);
+            } else {
+                query = query.eq('plant', userPlant);
+            }
         }
 
         const { data, error } = await query;
@@ -154,8 +158,8 @@ entry.get('/today', async (c) => {
         // Format IST
         const rows = data.map(item => {
             const converted = { ...item };
-            converted.entry_time = formatToISTString(item.entry_time);
-            converted.exit_time = formatToISTString(item.exit_time);
+            converted.entry_time = formatRawIST(item.entry_time);
+            converted.exit_time = formatRawIST(item.exit_time);
             converted.created_at = formatToISTString(item.created_at);
 
             return {
@@ -231,20 +235,24 @@ entry.get('/bydate', async (c) => {
     try {
         const { date } = c.req.query();
         const supabase = getSupabaseClient(c.env);
-        const { userRole, userPlant } = getUserContext(c);
+        const { userName, userRole, userPlant } = getUserContext(c);
 
         const targetDate = date || new Date().toISOString().split('T')[0];
 
         let query = supabase
             .from('entry_logs')
-            .select('*, vehicle_blacklist(reason)')
+            .select('*')
             .gte('created_at', `${targetDate}T00:00:00`)
             .lte('created_at', `${targetDate}T23:59:59`)
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
-        if (userRole !== 'superadmin' && userPlant) {
-            query = query.eq('plant', userPlant);
+        if (userRole !== 'superadmin' && userRole !== 'cslsuperadmin' && userPlant) {
+            if (userName === 'admin_seamless') {
+                query = query.in('plant', [userPlant, 'Wire Plant']);
+            } else {
+                query = query.eq('plant', userPlant);
+            }
         }
 
         const { data, error } = await query;
@@ -252,8 +260,8 @@ entry.get('/bydate', async (c) => {
 
         const rows = data.map(item => {
             const converted = { ...item };
-            converted.entry_time = formatToISTString(item.entry_time);
-            converted.exit_time = formatToISTString(item.exit_time);
+            converted.entry_time = formatRawIST(item.entry_time);
+            converted.exit_time = formatRawIST(item.exit_time);
             converted.created_at = formatToISTString(item.created_at);
 
             return {
@@ -306,6 +314,67 @@ entry.put('/:id/reject', async (c) => {
 
         if (error) return c.json({ message: 'Log not found' }, 404);
         return c.json(data);
+    } catch (err) {
+        return c.json({ message: err.message }, 500);
+    }
+});
+
+// EXPORT CSV
+entry.get('/export', async (c) => {
+    try {
+        const { userRole, userPlant } = getUserContext(c);
+        if (userRole !== 'superadmin' && userRole !== 'cslsuperadmin') {
+            return c.json({ message: 'Only superadmin can perform this action' }, 403);
+        }
+
+        const { range, start, end } = c.req.query();
+        const supabase = getSupabaseClient(c.env);
+
+        let query = supabase.from('entry_logs').select('*').is('deleted_at', null);
+
+        if (range === 'custom' && start && end) {
+            query = query.gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`);
+        } else {
+            let days = range === '7d' ? 7 : range === '15d' ? 15 : range === '30d' ? 30 : 0;
+            if (days > 0) {
+                const dateLimit = new Date();
+                dateLimit.setDate(dateLimit.getDate() - days);
+                query = query.gte('created_at', dateLimit.toISOString());
+            }
+        }
+
+        const { data: logs, error } = await query.order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (!logs || !logs.length) return c.json({ message: 'No records found for the selected range' }, 404);
+
+        // Generate CSV Content
+        const headers = ['ID', 'Gate Pass No', 'Plant', 'Vehicle Reg', 'Vehicle Type', 'Driver Name', 'Entry Time', 'Exit Time', 'Status'];
+        let csvContent = headers.join(',') + '\n';
+
+        logs.forEach(log => {
+            const row = [
+                log.id,
+                log.gate_pass_no || '',
+                `"${(log.plant || '').replace(/"/g, '""')}"`,
+                log.vehicle_reg || '',
+                log.vehicle_type || '',
+                `"${(log.driver_name || '').replace(/"/g, '""')}"`,
+                formatRawIST(log.entry_time) || '',
+                formatRawIST(log.exit_time) || '',
+                log.status || ''
+            ];
+            csvContent += row.join(',') + '\n';
+        });
+
+        const filename = `vehicle_logs_${range || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+
+        return c.body(csvContent, 200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Access-Control-Expose-Headers': 'Content-Disposition'
+        });
+
     } catch (err) {
         return c.json({ message: err.message }, 500);
     }
@@ -389,63 +458,6 @@ entry.get('/photo/:id/:index', async (c) => {
         }
 
         return c.json({ message: 'Legacy photo format not supported for direct proxy yet' }, 400);
-    } catch (err) {
-        return c.json({ message: err.message }, 500);
-    }
-});
-
-// EXPORT CSV
-entry.get('/export', async (c) => {
-    try {
-        const { userRole } = getUserContext(c);
-        if (userRole !== 'superadmin') {
-            return c.json({ message: 'Only superadmin can perform this action' }, 403);
-        }
-
-        const { range, start, end } = c.req.query();
-        const supabase = getSupabaseClient(c.env);
-
-        let query = supabase.from('entry_logs').select('*').is('deleted_at', null);
-
-        if (range === 'custom' && start && end) {
-            query = query.gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`);
-        } else {
-            let days = range === '7d' ? 7 : range === '15d' ? 15 : range === '30d' ? 30 : 0;
-            if (days > 0) {
-                const dateLimit = new Date();
-                dateLimit.setDate(dateLimit.getDate() - days);
-                query = query.gte('created_at', dateLimit.toISOString());
-            }
-        }
-
-        const { data: logs, error } = await query.order('created_at', { ascending: false });
-        if (error || !logs.length) return c.json({ message: 'No records found' }, 404);
-
-        // Generate CSV Content
-        const headers = ['ID', 'Gate Pass No', 'Plant', 'Vehicle Reg', 'Vehicle Type', 'Driver Name', 'Entry Time', 'Exit Time', 'Status'];
-        let csvContent = headers.join(',') + '\n';
-
-        logs.forEach(log => {
-            const row = [
-                log.id,
-                log.gate_pass_no || '',
-                `"${log.plant || ''}"`,
-                log.vehicle_reg || '',
-                log.vehicle_type || '',
-                `"${log.driver_name || ''}"`,
-                log.entry_time || '',
-                log.exit_time || '',
-                log.status || ''
-            ];
-            csvContent += row.join(',') + '\n';
-        });
-
-        return new Response(csvContent, {
-            headers: {
-                'Content-Type': 'text/csv',
-                'Content-Disposition': `attachment; filename=vehicle_logs_${range || 'all'}.csv`
-            }
-        });
     } catch (err) {
         return c.json({ message: err.message }, 500);
     }

@@ -33,8 +33,7 @@ blacklist.post('/', async (c) => {
             .from('vehicle_blacklist')
             .insert([{
                 vehicle_no: vehicle_no.toUpperCase(),
-                reason,
-                created_by: c.get('userId')
+                reason
             }])
             .select()
             .single();
